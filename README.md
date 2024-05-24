@@ -16,7 +16,7 @@
 6. Утилита очищает таблицу от лишних *&DEVC*, преобразует научную нотацию записей в обыкновенный математический вид, далее ищет строку, в которой количество ячеек, значение в каждой из которых превышает (в случае с параметром *VISIBILITY* не превышает) пороговое, превышает количество точек **Cc**, в области **F**, необходимое для получения такой площади области **F**, при которой значение эффективного диаметра **dэфф** будет больше или равно нормативному расстоянию между пожарными извещателями. При этом нормативное расстояние между извещателями определяется по формуле ![L_latex](https://raw.githubusercontent.com/firegoaway/Plot_CSV_Time_Threshhold/main/.gitpics/L_latex.jpg)
 7. Таким образом, программа расчитывает **tпор** строго по [пунктам 1 и 2 приложения 11 Методики 1140](https://ivo.garant.ru/#/document/406577165/paragraph/1532/doclist/6480/1/0/0/методика%201140:0).
 
-![firegoaway_pctt_demo_gif-min](https://github.com/firegoaway/Plot_CSV_Time_Threshhold/blob/main/.gitpics/pctt_demo_gif.gif)
+![firegoaway_pctt_demo_gif-min](https://github.com/firegoaway/Plot_CSV_Time_Threshhold/blob/main/.gitpics/pctt_demo_gif-min.gif)
 
 ### Поддерживаемые версии FDS
 > [**FDS 6.9.1**](https://github.com/firemodels/fds/releases/tag/FDS-6.9.1)
