@@ -168,6 +168,8 @@ if input_file_path:
         time_index = valid_columns.index(headers.index('Time'))
         
         critical_time = None
+        deff = None
+        deff_values = []
         
         for i, row in enumerate(filtered_data):
             if (quantity == "VISIBILITY"):
@@ -177,23 +179,39 @@ if input_file_path:
             if count >= Cc:
                 critical_time = row[time_index]
                 break
-
+            else:
+                deff = math.sqrt((4 * (count * input_Cs)) / math.pi)
+                deff_values.append(deff)
+    
     time_values = [row[time_index] for row in filtered_data]
+    relevant_time_values = time_values[:len(deff_values)]
     devc_data = {headers[i]: [row[i] for row in filtered_data] for i in valid_columns if headers[i] != 'Time'}
-
+    
     plt.figure(figsize=(10, 6))
+    
     for header, values in devc_data.items():
         plt.plot(time_values, values)
-
+    
     if critical_time is not None:
-        plt.axvline(x=critical_time, color='red', linestyle='--', lw=2, label=f'tпор = {critical_time:.2f} (сек)')
+        plt.axvline(x=critical_time, color='red', linestyle='--', lw=3, label=f'tпор = {critical_time:.2f} (сек)')
     else:
         messagebox.showinfo("Проверка данных", "Проверьте введённые данные. Возможно вы неправильно указали предельное значение параметра, воздействующего на ИП ДОТ.")
         print("critical_time не найдено.")
     
+    if (quantity == "VISIBILITY"):
+        measure_units = "м"
+    elif (quantity == "EXTINCTION COEFFICIENT"):
+        measure_units = "дБ/м"
+    elif (quantity == "OPTICAL DENSITY"):
+        measure_units = "Нп/м"
+    
+    plt.plot(relevant_time_values, deff_values, color='black', linewidth=5, label='dэфф (м)')
+    plt.axhline(y=L, color='green', linestyle='--', lw=3, label=f'dэфф = {L:.3f} (м)')
+    
+    plt.axhline(y=input_threshold, color='blue', linestyle='--', lw=3, label=f'Крит. знач. параметра = {input_threshold:.3f} ({measure_units})')
     plt.xlabel('Время (сек)')
     plt.ylabel('Значение параметра')
-    plt.title(f'График параметра, воздействующего на ИП ДОТ, во всех точках в области F')
+    plt.title(f'График dэфф и параметра, воздействующего на ИП ДОТ, во всех точках в области F')
     plt.grid(True)
     plt.legend()
     plt.show()
