@@ -3,7 +3,7 @@
 ; #Include GetSelectedFile.ahk
 
 Gui, Add, Text, x12 y19 w170 h40 +Center, Выберите параметр`, воздействующий на ИП ДОТ:
-Gui, Add, DropDownList, x12 y69 w170 h60 vQuantity, VISIBILITY|EXTINCTION_COEFFICIENT|OPTICAL_DENSITY
+Gui, Add, DropDownList, x12 y69 w170 h60 vQuantity, VISIBILITY|EXTINCTION COEFFICIENT|OPTICAL DENSITY
 Gui, Add, Text, x12 y109 w170 h40 +Center, Введите высоту помещения`, в котором требуется определить tпор:
 Gui, Add, Edit, x62 y159 w90 h20 vHZ
 Gui, Add, Button, x12 y209 w170 h30 gOkButton, OK
@@ -58,13 +58,13 @@ OkButton:
         trip_direction := -1
         IniWrite, %setpoint%, %A_ScriptDir%\IniSetpoint.ini, IniSetpoint, setpoint
     }
-    else if (Quantity = "EXTINCTION_COEFFICIENT")
+    else if (Quantity = "EXTINCTION COEFFICIENT")
     {
         setpoint := 0.2
         trip_direction := 1
         IniWrite, %setpoint%, %A_ScriptDir%\IniSetpoint.ini, IniSetpoint, setpoint
     }
-    else if (Quantity = "OPTICAL_DENSITY")
+    else if (Quantity = "OPTICAL DENSITY")
     {
         setpoint := 0.023
         trip_direction := 1
