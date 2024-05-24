@@ -29,7 +29,7 @@
 
 |	№ п/п	|	Действие	|
 |---------|---------|
-|	1	|	Скачайте последнюю версию **Zmejka.exe** в разделе [**Releases**](https://github.com/firegoaway/Zmejka/releases)	|
+|	1	|	Скачайте последнюю версию **Zmejka** в разделе [**Releases**](https://github.com/firegoaway/Zmejka/releases)	|
 |	2	|	Запустите **Zmejka.exe**. Нажмите **"Browse .fds"** и выберите файл сценария FDS.	|
 |	3	|	Во вкладке **"Settings"** нажмите **"Run Insert_DEVC"**. Откроется новое окно.	|
 |	4	|	В окне **Insert_DEVC** выберите параметр, воздействующий на пожарный извещатель и введите высоту помещения. Нажмите **OK**.	|
