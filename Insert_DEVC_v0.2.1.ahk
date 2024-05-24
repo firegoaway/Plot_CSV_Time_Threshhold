@@ -10,7 +10,7 @@ Gui, Add, Button, x12 y209 w170 h30 gOkButton, OK
 Gui, Add, Text, x12 y159 w40 h20 , Hпом =
 Gui, Add, Text, x162 y159 w20 h20 , м
 
-Gui, Show, x732 y442 h265 w200, Isert_Devc_v0.1.1
+Gui, Show, x732 y442 h265 w200, Isert_Devc_v0.2.1
 Return
 
 OkButton:
