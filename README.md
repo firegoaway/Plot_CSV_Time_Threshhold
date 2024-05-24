@@ -51,4 +51,5 @@
 
 # Актуальная Хэш-сумма
 > PCTT.exe - **222501c05c277697ff2c92e7ee8dcd1c**
+
 > Insert_DEVC.exe - **71ee67b0642b9c2970edd16c8f047030**
