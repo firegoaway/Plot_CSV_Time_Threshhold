@@ -1,5 +1,6 @@
 old_versions/
 dist/
+./build
 *.exe
 *.docx
 *.ico
