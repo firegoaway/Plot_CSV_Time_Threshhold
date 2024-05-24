@@ -76,10 +76,12 @@ config = configparser.ConfigParser()
 file_IniHZ = 'IniHZ.ini'
 file_InideltaZ = 'InideltaZ.ini'
 file_IniSetpoint = 'IniSetpoint.ini'
+file_IniQuantity = 'IniQuantity.ini'
 
 value_IniHZ = None
 value_InideltaZ = None
-valuew_IniSetpoint = None
+value_IniSetpoint = None
+value_IniQuantity = None
 
 if os.path.isfile(file_IniHZ) and os.path.isfile(file_InideltaZ) and os.path.isfile(file_IniSetpoint):
     try:
@@ -99,6 +101,12 @@ if os.path.isfile(file_IniHZ) and os.path.isfile(file_InideltaZ) and os.path.isf
         value_IniSetpoint = config['IniSetpoint']['setpoint']
     except Exception as e:
         print(f"Error reading setpoint value from {file_IniSetpoint}: {e}")
+        
+    try:
+        config.read(file_IniQuantity, encoding='utf-16')
+        value_IniQuantity = config['IniQuantity']['Quantity']
+    except Exception as e:
+        print(f"Error reading Quantity value from {file_IniQuantity}: {e}")
 
     input_window = MultiInputWindow(H=value_IniHZ, Cs=value_InideltaZ, threshold=value_IniSetpoint)
 else:
@@ -110,6 +118,7 @@ input_file_path = input_window.file_path
 input_H = input_window.H
 input_Cs = input_window.Cs
 input_threshold = input_window.threshold
+quantity = value_IniQuantity
 
 R = None
 if input_H <= 3.5:
@@ -161,7 +170,10 @@ if input_file_path:
         critical_time = None
         
         for i, row in enumerate(filtered_data):
-            count = sum(1 for val in row if isinstance(val, float) and val <= input_threshold)
+            if (quantity == "VISIBILITY"):
+                count = sum(1 for val in row if isinstance(val, float) and val <= input_threshold)
+            else:
+                count = sum(1 for val in row if isinstance(val, float) and val >= input_threshold)
             if count >= Cc:
                 critical_time = row[time_index]
                 break

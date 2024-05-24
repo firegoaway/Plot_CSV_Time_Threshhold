@@ -19,7 +19,9 @@
 ![firegoaway_pctt_demo_gif-min](https://raw.githubusercontent.com/firegoaway/Plot_CSV_Time_Threshhold/main/.gitpics/pctt_demo_gif-min.gif)
 
 ### Поддерживаемые версии FDS
-> **FDS 6.9.1 | FDS 6.8.0**
+> [**FDS 6.9.1**](https://github.com/firemodels/fds/releases/tag/FDS-6.9.1)
+> [**FDS 6.9.0**](https://github.com/firemodels/fds/releases/tag/FDS-6.9.0)
+> [**FDS 6.8.0**](https://github.com/firemodels/fds/releases/tag/FDS-6.8.0)
 
 ## Как установить и пользоваться
 > **PCTT** работает как самостоятельно, так и в связке с утилитой [**Zmejka**](https://github.com/firegoaway/Zmejka)
@@ -47,6 +49,6 @@
 - Хэш-сумма обновляется только при обновлении версии утилиты и всегда доступна в конце файла **README.md**.
 
 # Актуальная Хэш-сумма
-> PCTT.exe - **222501c05c277697ff2c92e7ee8dcd1c**
+> PCTT.exe - **b41b14a711e8cec57f86b6988c4c62fa**
 
 > Insert_DEVC.exe - **26a14c5b86678dc79233303dac3e685d**
