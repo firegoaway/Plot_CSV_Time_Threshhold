@@ -1,0 +1,218 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<?application progid="SMath Studio настольная" version="1.1.8763.0"?>
+<worksheet xmlns="http://smath.info/schemas/worksheet/1.0">
+  <settings ppi="96">
+    <identity>
+      <id>ad418a33-3648-42a6-b222-c75038eb49dd</id>
+      <revision>31</revision>
+    </identity>
+    <metadata lang="rus">
+      <author>Umakhan</author>
+    </metadata>
+    <calculation>
+      <precision>4</precision>
+      <exponentialThreshold>5</exponentialThreshold>
+      <trailingZeros>false</trailingZeros>
+      <significantDigitsMode>false</significantDigitsMode>
+      <roundingMode>0</roundingMode>
+      <approximateEqualAccuracy>0</approximateEqualAccuracy>
+      <fractions>decimal</fractions>
+    </calculation>
+    <pageModel active="false" viewMode="2" printGrid="false" printAreas="true" simpleEqualsOnly="false" printBackgroundImages="true">
+      <paper id="9" orientation="Portrait" width="827" height="1169" />
+      <margins left="39" right="39" top="49" bottom="49" />
+      <header alignment="Center" color="#a9a9a9">&amp;[DATE] &amp;[TIME] - &amp;[FILENAME]</header>
+      <footer alignment="Center" color="#a9a9a9">&amp;[PAGENUM] / &amp;[COUNT]</footer>
+      <backgrounds />
+    </pageModel>
+    <dependencies>
+      <assembly name="SMath Studio настольная" version="1.1.8763.0" guid="a37cba83-b69c-4c71-9992-55ff666763bd" />
+      <assembly name="MathRegion" version="1.11.8763.0" guid="02f1ab51-215b-466e-a74d-5d8b1cf85e8d" />
+      <assembly name="PictureRegion" version="1.10.8763.0" guid="06b5df04-393e-4be7-9107-305196fcb861" />
+      <assembly name="Custom Functions" version="1.1.8726.29023" guid="18dadffd-79a3-4cf9-aee1-d66deb0ea720" />
+      <assembly name="SpecialFunctions" version="1.12.8763.0" guid="2814e667-4e12-48b1-8d51-194e480eabc5" />
+    </dependencies>
+  </settings>
+  <regions type="content">
+    <region left="0" top="0" width="82" height="27" color="#000000" fontSize="12">
+      <math>
+        <description active="true" position="Right" lang="eng">
+          <content>
+            <p>Hпом - Высота помещения с очагом пожара (м)</p>
+          </content>
+        </description>
+        <input>
+          <e type="operand">Hпом</e>
+          <e type="operand">3</e>
+          <e type="operator" args="2">:</e>
+        </input>
+      </math>
+    </region>
+    <region left="0" top="54" width="343" height="210" color="#000000" fontSize="12">
+      <math>
+        <description active="true" position="Right" lang="eng">
+          <content>
+            <p>R - Радиус зоны контроля извещателя (м). <br />Определяется по таблице.</p>
+          </content>
+        </description>
+        <input>
+          <e type="operand">R</e>
+          <e type="operand">Hпом</e>
+          <e type="operand">3.5</e>
+          <e type="operator" args="2">≤</e>
+          <e type="operand">6.40</e>
+          <e type="operand">Hпом</e>
+          <e type="operand">3.5</e>
+          <e type="operator" args="2">&gt;</e>
+          <e type="bracket">(</e>
+          <e type="operand">Hпом</e>
+          <e type="operand">6</e>
+          <e type="operator" args="2">≤</e>
+          <e type="bracket">(</e>
+          <e type="operator" args="2">&amp;</e>
+          <e type="operand">6.05</e>
+          <e type="operand">Hпом</e>
+          <e type="operand">6</e>
+          <e type="operator" args="2">&gt;</e>
+          <e type="bracket">(</e>
+          <e type="operand">Hпом</e>
+          <e type="operand">10</e>
+          <e type="operator" args="2">≤</e>
+          <e type="bracket">(</e>
+          <e type="operator" args="2">&amp;</e>
+          <e type="operand">5.70</e>
+          <e type="operand">5.35</e>
+          <e type="function" args="3">if</e>
+          <e type="function" args="3">if</e>
+          <e type="function" args="3">if</e>
+          <e type="operator" args="2">:</e>
+        </input>
+        <result action="numeric">
+          <e type="operand">6.4</e>
+        </result>
+      </math>
+    </region>
+    <region left="0" top="306" width="157" height="29" color="#000000" fontSize="12">
+      <math>
+        <description active="true" position="Right" lang="eng">
+          <content>
+            <p>L - Расстояние между извещателями (м). Определяется аналитически.</p>
+          </content>
+        </description>
+        <input>
+          <e type="operand">L</e>
+          <e type="operand">R</e>
+          <e type="operand">2</e>
+          <e type="function" args="1">sqrt</e>
+          <e type="operator" args="2">*</e>
+          <e type="operator" args="2">:</e>
+        </input>
+        <result action="numeric">
+          <e type="operand">9.051</e>
+        </result>
+      </math>
+    </region>
+    <region left="0" top="333" width="82" height="27" color="#000000" fontSize="12">
+      <math>
+        <description active="true" position="Right" lang="eng">
+          <content>
+            <p>Cs - размер ячейки расчётной области (м)</p>
+          </content>
+        </description>
+        <input>
+          <e type="operand">Cs</e>
+          <e type="operand">0.5</e>
+          <e type="operator" args="2">:</e>
+        </input>
+      </math>
+    </region>
+    <region left="0" top="396" width="122" height="49" color="#000000" fontSize="12">
+      <math optimize="2">
+        <description active="true" position="Right" lang="eng">
+          <content>
+            <p>dэфф - Эффективный диаметр области F (м)</p>
+          </content>
+        </description>
+        <input>
+          <e type="operand">dэфф</e>
+          <e type="operand">4</e>
+          <e type="operand">F</e>
+          <e type="operator" args="2">*</e>
+          <e type="operand">π</e>
+          <e type="operator" args="2">/</e>
+          <e type="function" args="1">sqrt</e>
+          <e type="operator" args="2">:</e>
+        </input>
+      </math>
+    </region>
+    <region left="0" top="450" width="360" height="43" color="#000000" fontSize="12">
+      <math>
+        <description active="true" position="Right" lang="eng">
+          <content>
+            <p>Область F (м2), в каждой точке которой<br />значение параметра, воздействующего на <br />пожарный извещатель, превышает пороговое<br />значение его сработки.</p>
+          </content>
+        </description>
+        <input>
+          <e type="operand">F</e>
+          <e type="operand">dэфф</e>
+          <e type="operand">L</e>
+          <e type="operator" args="2">≡</e>
+          <e type="operand">F</e>
+          <e type="operand">10</e>
+          <e type="operand">3</e>
+          <e type="operator" args="2">^</e>
+          <e type="operator" args="1">-</e>
+          <e type="operand">10</e>
+          <e type="operand">3</e>
+          <e type="operator" args="2">^</e>
+          <e type="function" args="4">solve</e>
+          <e type="function" args="1">Ceil</e>
+          <e type="operator" args="2">:</e>
+        </input>
+        <result action="numeric">
+          <e type="operand">65</e>
+        </result>
+      </math>
+    </region>
+    <region left="0" top="540" width="128" height="27" color="#000000" fontSize="12">
+      <math>
+        <description active="true" position="Right" lang="eng">
+          <content>
+            <p>dэфф - Эффективный диаметр области F (м)</p>
+          </content>
+        </description>
+        <input>
+          <e type="operand">dэфф</e>
+        </input>
+        <result action="numeric">
+          <e type="operand">9.0973</e>
+        </result>
+      </math>
+    </region>
+    <region left="0" top="585" width="137" height="49" color="#000000" fontSize="12">
+      <math>
+        <description active="true" position="Right" lang="eng">
+          <content>
+            <p>Cc - Количество точек (ячеек) в области F, в которых значение<br />порогового параметра должно превысить пороговое значение его сработки, <br />чтобы выполнялось условие L ≤ dэфф.</p>
+          </content>
+        </description>
+        <input>
+          <e type="operand">Cc</e>
+          <e type="operand">F</e>
+          <e type="operand">Cs</e>
+          <e type="operator" args="2">/</e>
+          <e type="function" args="1">Ceil</e>
+          <e type="operator" args="2">:</e>
+        </input>
+        <result action="numeric">
+          <e type="operand">130</e>
+        </result>
+      </math>
+    </region>
+    <region left="0" top="675" width="611" height="195" color="#000000">
+      <picture>
+        <raw format="png" encoding="base64">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</raw>
+      </picture>
+    </region>
+  </regions>
+</worksheet>
