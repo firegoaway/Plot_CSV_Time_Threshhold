@@ -19,7 +19,7 @@
 ![firegoaway_pctt_demo_gif-min](https://raw.githubusercontent.com/firegoaway/Plot_CSV_Time_Threshhold/main/.gitpics/pctt_demo_gif-min.gif)
 
 ### Поддерживаемые версии FDS
-> **FDS 6.9.1	|	FDS 6.8.0**
+> **FDS 6.9.1 | FDS 6.8.0**
 
 ### Поддерживаемые версии Fenix+
 > **Fenix+ 3**
