@@ -37,43 +37,81 @@ Sub ProcessCSV()
         End If
     Next col
 
-    ' Delete columns with cells all >= 30
+    ' Assign Quantity and Thresholds
+    Dim quantity As String
+    Dim qThreshold As Double
+    Dim MaxValue As Double
+    
+    quantity = Trim(InputBox("quantity = ", "quantity"))
+    qThreshold = Val(InputBox("qThreshold = ", "qThreshold"))
+    MaxValue = Val(InputBox("MaxValue = ", "MaxValue"))
+
+    ' Delete columns with cells all >= MaxValue
     lastCol = ws.Cells(1, ws.Columns.Count).End(xlToLeft).Column
     lastRow = ws.Cells(ws.Rows.Count, 1).End(xlUp).row
     
+    Dim deleteCol As Boolean
+    
     For col = lastCol To 2 Step -1
-        Dim deleteCol As Boolean
         deleteCol = True
         For R = 2 To lastRow
-            If ws.Cells(R, col).Value < 30 Then
+            If quantity = "vis" And ws.Cells(R, col).Value < MaxValue Then
                 deleteCol = False
                 Exit For
             End If
         Next R
-        If deleteCol Then ws.Columns(col).Delete
+        If deleteCol Then
+            ws.Columns(col).Delete
+        End If
     Next col
     
-    ' Count columns with values <= 28.5709
+    For col = lastCol To 2 Step 1
+        deleteCol = True
+        For R = 2 To lastRow
+            If (quantity = "ext" Or quantity = "opt") And ws.Cells(R, col).Value > MaxValue Then
+                deleteCol = False
+                Exit For
+            End If
+        Next R
+        If deleteCol Then
+            ws.Columns(col).Delete
+        End If
+    Next col
+    
+    ' Count columns
     lastCol = ws.Cells(1, ws.Columns.Count).End(xlToLeft).Column
     Dim colCount As Long
     colCount = 0
     
-    For col = 2 To lastCol
-        For R = 2 To lastRow
-            If ws.Cells(R, col).Value <= 28.5709 Then
-                colCount = colCount + 1
-                Exit For
-            End If
-        Next R
-    Next col
+    ' Count columns with values <= QThreshold
+    If quantity = "vis" Then
+        For col = 2 To lastCol
+            For R = 2 To lastRow
+                If ws.Cells(R, col).Value <= qThreshold Then
+                    colCount = colCount + 1
+                    Exit For
+                End If
+            Next R
+        Next col
+    ' Count columns with values >= QThreshold
+    ElseIf quantity = "ext" Or quantity = "opt" Then
+        For col = 2 To lastCol
+            For R = 2 To lastRow
+                If ws.Cells(R, col).Value >= qThreshold Then
+                    colCount = colCount + 1
+                    Exit For
+                End If
+            Next R
+        Next col
+    End If
 
-    MsgBox "Number of columns (except the first one) with at least one cell with value <= 28.5709: " & colCount
+    MsgBox "Number of columns (except the first one) with at least one cell with qThreshold value: " & colCount
     
-    ' Highlight a single row with more than calculated cells value <= 28.5709
+    ' Highlight a single row with more than calculated cells value <= QThreshold
     Dim Cc As Double, Cs As Double, H As Double, Radius As Double, L As Double, deff As Double, F As Double
     Dim Pi As Double
     
-    H = Val(InputBox("H = ", "columnNumber"))
+    H = Val(InputBox("H = ", "H"))
     If H <= 3.5 Then
         Radius = 6.4
     ElseIf H > 3.5 And H <= 6 Then
@@ -86,7 +124,7 @@ Sub ProcessCSV()
 
     L = Radius * Sqr(2)
     MsgBox "L = " & L
-    Cs = Val(InputBox("Cs = ", "columnNumber"))
+    Cs = Val(InputBox("Cs = ", "Cs"))
     deff = L
     F = (MultiplyByPi(1) * (deff ^ 2)) / 4
     ' MsgBox "F = " & F
@@ -103,36 +141,70 @@ Sub ProcessCSV()
     For R = 2 To lastRow
         Dim cellCount As Long
         cellCount = 0
-        For col = 2 To lastCol
-            If ws.Cells(R, col).Value <= 28.5709 Then
-                cellCount = cellCount + 1
-            End If
-        Next col
-        If cellCount >= Cc And Not highlighted Then
+        If quantity = "vis" Then
             For col = 2 To lastCol
-                If ws.Cells(R, col).Value <= 28.5709 Then
-                    ' Highlight the cell
-                    With ws.Cells(R, col)
-                        .Font.Bold = True
-                        .Interior.Color = RGB(144, 238, 144) ' Light green background
-                        .Borders(xlEdgeLeft).LineStyle = xlContinuous
-                        .Borders(xlEdgeTop).LineStyle = xlContinuous
-                        .Borders(xlEdgeBottom).LineStyle = xlContinuous
-                        .Borders(xlEdgeRight).LineStyle = xlContinuous
-                    End With
-                    highlightedCols.Add col
-                    With ws.Cells(R, 1)
-                        .Font.Bold = True
-                        .Interior.Color = RGB(255, 0, 0) ' Light red background
-                        .Borders(xlEdgeLeft).LineStyle = xlContinuous
-                        .Borders(xlEdgeTop).LineStyle = xlContinuous
-                        .Borders(xlEdgeBottom).LineStyle = xlContinuous
-                        .Borders(xlEdgeRight).LineStyle = xlContinuous
-                    End With
-                    highlightedCols.Add col
+                If ws.Cells(R, col).Value <= qThreshold Then
+                    cellCount = cellCount + 1
                 End If
             Next col
-            highlighted = True
+            If cellCount >= Cc And Not highlighted Then
+                For col = 2 To lastCol
+                    If ws.Cells(R, col).Value <= qThreshold Then
+                        ' Highlight the cell
+                        With ws.Cells(R, col)
+                            .Font.Bold = True
+                            .Interior.Color = RGB(144, 238, 144) ' Light green background
+                            .Borders(xlEdgeLeft).LineStyle = xlContinuous
+                            .Borders(xlEdgeTop).LineStyle = xlContinuous
+                            .Borders(xlEdgeBottom).LineStyle = xlContinuous
+                            .Borders(xlEdgeRight).LineStyle = xlContinuous
+                        End With
+                        highlightedCols.Add col
+                        With ws.Cells(R, 1)
+                            .Font.Bold = True
+                            .Interior.Color = RGB(255, 0, 0) ' Light red background
+                            .Borders(xlEdgeLeft).LineStyle = xlContinuous
+                            .Borders(xlEdgeTop).LineStyle = xlContinuous
+                            .Borders(xlEdgeBottom).LineStyle = xlContinuous
+                            .Borders(xlEdgeRight).LineStyle = xlContinuous
+                        End With
+                        highlightedCols.Add col
+                    End If
+                Next col
+                highlighted = True
+            End If
+        ElseIf quantity = "ext" Or quantity = "opt" Then
+            For col = 2 To lastCol
+                If ws.Cells(R, col).Value >= qThreshold Then
+                    cellCount = cellCount + 1
+                End If
+            Next col
+            If cellCount >= Cc And Not highlighted Then
+                For col = 2 To lastCol
+                    If ws.Cells(R, col).Value >= qThreshold Then
+                        ' Highlight the cell
+                        With ws.Cells(R, col)
+                            .Font.Bold = True
+                            .Interior.Color = RGB(144, 238, 144) ' Light green background
+                            .Borders(xlEdgeLeft).LineStyle = xlContinuous
+                            .Borders(xlEdgeTop).LineStyle = xlContinuous
+                            .Borders(xlEdgeBottom).LineStyle = xlContinuous
+                            .Borders(xlEdgeRight).LineStyle = xlContinuous
+                        End With
+                        highlightedCols.Add col
+                        With ws.Cells(R, 1)
+                            .Font.Bold = True
+                            .Interior.Color = RGB(255, 0, 0) ' Light red background
+                            .Borders(xlEdgeLeft).LineStyle = xlContinuous
+                            .Borders(xlEdgeTop).LineStyle = xlContinuous
+                            .Borders(xlEdgeBottom).LineStyle = xlContinuous
+                            .Borders(xlEdgeRight).LineStyle = xlContinuous
+                        End With
+                        highlightedCols.Add col
+                    End If
+                Next col
+                highlighted = True
+            End If
         End If
     Next R
     
