@@ -27,7 +27,7 @@ Sub AnalyzeAndHighlight()
     Else
         R = 5.35
     End If
-    L = R * Sqrt(2)
+    L = R * Sqr(2)
     Cs = Val(InputBox("Cs - размер €чейки расчЄтной области (м)", "columnNumber"))
     deff = L
     F = (MultiplyByPi(1) * (deff ^ 2)) / 4
