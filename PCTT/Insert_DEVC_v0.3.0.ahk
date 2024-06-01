@@ -2,32 +2,50 @@
 #SingleInstance, Force
 ; #Include GetSelectedFile.ahk
 
-Gui, Add, Text, x12 y19 w170 h40 +Center, Выберите параметр`, воздействующий на ИП ДОТ:
-Gui, Add, DropDownList, x12 y69 w170 h60 vQuantity, VISIBILITY|EXTINCTION COEFFICIENT|OPTICAL DENSITY
-Gui, Add, Text, x12 y109 w170 h40 +Center, Введите высоту помещения`, в котором требуется определить tпор:
-Gui, Add, Edit, x62 y159 w90 h20 vHZ
-Gui, Add, Button, x12 y209 w170 h30 gOkButton, OK
+Gui, Add, Text, x12 y19 w160 h30 +Center, Выберите параметр`, воздействующий на ИП ДОТ:
+Gui, Add, DropDownList, x12 y59 w160 h60 vQuantity, VISIBILITY|EXTINCTION COEFFICIENT|OPTICAL DENSITY
+Gui, Add, Text, x12 y109 w160 h40 +Center, Введите высоту помещения`, в котором требуется определить tпор:
+Gui, Add, Edit, x62 y159 w80 h20 vHZ, 
+Gui, Add, Button, x12 y349 w160 h30 gOkButton, OK
 Gui, Add, Text, x12 y159 w40 h20 , Hпом =
-Gui, Add, Text, x162 y159 w20 h20 , м
+Gui, Add, Text, x152 y159 w20 h20 +Left, м
+Gui, Add, Text, x12 y209 w160 h40 +Center, Введите абсолютную отметку пола помещения:
+Gui, Add, Edit, x62 y259 w80 h20 vZh, 
+Gui, Add, Text, x152 y259 w20 h20 , м
+Gui, Add, Text, x12 y259 w40 h20 , Zпом =
+Gui, Add, Progress, x12 y89 w160 h10 , 100
+Gui, Add, Progress, x12 y189 w160 h10 , 100
+Gui, Add, Progress, x12 y289 w160 h10 , 100
 
-Gui, Show, x732 y442 h265 w200, Isert_Devc_v0.2.1
+Gui, Show, x130 y134 h408 w224, Isert_Devc_v0.3.0
 Return
 
 OkButton:
     Gui, Submit, NoHide
+	
     if (Quantity = "")
     {
-        MsgBox, % "Значение параметра, воздействующего на ИП ДОТ, не может быть пустым."
+        MsgBox, % "Выберите значение параметра, воздействующего на ИП ДОТ!"
         Return ; Return to allow further actions without exiting the program
     }
     IniWrite, %Quantity%, %A_ScriptDir%\IniQuantity.ini, IniQuantity, Quantity
+	
     if (HZ = "") || (HZ <= 0)
     {
-        MsgBox, % "Введите достоверное значение высоты."
+        MsgBox, % "Введите достоверное значение высоты!"
         Return ; Return to allow further actions without exiting the program
     }
     IniWrite, %HZ%, %A_ScriptDir%\IniHZ.ini, IniHZ, HZ
     ; MsgBox, % "Параметр: " . Quantity . "`nВысота: " . HZ
+	
+	if (Zh = "")
+    {
+        MsgBox, % "Введите достоверное значение высотной отметки!"
+        Return ; Return to allow further actions without exiting the program
+    }
+    IniWrite, %Zh%, %A_ScriptDir%\IniZh.ini, IniZh, Zh
+    ; MsgBox, % "Высота: " . HZ . "`nВысотная отметка: " . Zh
+	
     Gui, Hide
 
     ; Назначаем файлы ввода и вывода
@@ -99,7 +117,7 @@ OkButton:
                 deltaY := (Y2 - Y1) / J
                 deltaZ := (Z2 - Z1) / K
                 
-                Z := HZ - deltaZ
+                Z := Zh + HZ - deltaZ
                 
                 Loop, % I
                 {
