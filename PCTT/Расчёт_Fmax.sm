@@ -4,7 +4,7 @@
   <settings ppi="96">
     <identity>
       <id>ad418a33-3648-42a6-b222-c75038eb49dd</id>
-      <revision>31</revision>
+      <revision>32</revision>
     </identity>
     <metadata lang="rus">
       <author>Umakhan</author>
@@ -34,7 +34,7 @@
     </dependencies>
   </settings>
   <regions type="content">
-    <region left="0" top="0" width="82" height="27" color="#000000" fontSize="12">
+    <region left="0" top="0" width="101" height="27" color="#000000" fontSize="12">
       <math>
         <description active="true" position="Right" lang="eng">
           <content>
@@ -43,12 +43,12 @@
         </description>
         <input>
           <e type="operand">Hпом</e>
-          <e type="operand">3</e>
+          <e type="operand">3.6</e>
           <e type="operator" args="2">:</e>
         </input>
       </math>
     </region>
-    <region left="0" top="54" width="343" height="210" color="#000000" fontSize="12">
+    <region left="0" top="54" width="353" height="210" color="#000000" fontSize="12">
       <math>
         <description active="true" position="Right" lang="eng">
           <content>
@@ -88,7 +88,7 @@
           <e type="operator" args="2">:</e>
         </input>
         <result action="numeric">
-          <e type="operand">6.4</e>
+          <e type="operand">6.05</e>
         </result>
       </math>
     </region>
@@ -108,7 +108,7 @@
           <e type="operator" args="2">:</e>
         </input>
         <result action="numeric">
-          <e type="operand">9.051</e>
+          <e type="operand">8.556</e>
         </result>
       </math>
     </region>
@@ -170,7 +170,7 @@
           <e type="operator" args="2">:</e>
         </input>
         <result action="numeric">
-          <e type="operand">65</e>
+          <e type="operand">58</e>
         </result>
       </math>
     </region>
@@ -185,7 +185,7 @@
           <e type="operand">dэфф</e>
         </input>
         <result action="numeric">
-          <e type="operand">9.0973</e>
+          <e type="operand">8.5935</e>
         </result>
       </math>
     </region>
@@ -205,7 +205,7 @@
           <e type="operator" args="2">:</e>
         </input>
         <result action="numeric">
-          <e type="operand">130</e>
+          <e type="operand">116</e>
         </result>
       </math>
     </region>

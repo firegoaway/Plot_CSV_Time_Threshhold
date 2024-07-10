@@ -13,9 +13,9 @@ Gui, Add, Text, x12 y209 w160 h40 +Center, Введите абсолютную �
 Gui, Add, Edit, x62 y259 w80 h20 vZh, 
 Gui, Add, Text, x152 y259 w20 h20 , м
 Gui, Add, Text, x12 y259 w40 h20 , Zпом =
-Gui, Add, Progress, x12 y89 w160 h10 , 100
-Gui, Add, Progress, x12 y189 w160 h10 , 100
-Gui, Add, Progress, x12 y289 w160 h10 , 100
+Gui, Add, Progress, x12 y89 w160 h10 vQuantityProgressBar, 100
+Gui, Add, Progress, x12 y189 w160 h10 vHZProgressBar, 100
+Gui, Add, Progress, x12 y289 w160 h10 vZhProgressBar, 100
 
 Gui, Show, x130 y134 h408 w224, Isert_Devc_v0.3.0
 Return

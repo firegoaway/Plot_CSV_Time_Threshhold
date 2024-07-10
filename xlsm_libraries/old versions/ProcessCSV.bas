@@ -52,33 +52,31 @@ Sub ProcessCSV()
     
     Dim deleteCol As Boolean
     
-    If quantity = "vis" Then
-        For col = lastCol To 2 Step -1
-            deleteCol = True
-            For R = 2 To lastRow
-                If ws.Cells(R, col).Value < MaxValue Then
-                    deleteCol = False
-                    Exit For
-                End If
-            Next R
-            If deleteCol Then
-                ws.Columns(col).Delete
+    For col = lastCol To 2 Step -1
+        deleteCol = True
+        For R = 2 To lastRow
+            If quantity = "vis" And ws.Cells(R, col).Value < MaxValue Then
+                deleteCol = False
+                Exit For
             End If
-        Next col
-    ElseIf quantity = "ext" Or quantity = "opt" Then
-        For col = lastCol To 2 Step 1
-            deleteCol = True
-            For R = 2 To lastRow
-                If ws.Cells(R, col).Value > MaxValue Then
-                    deleteCol = False
-                    Exit For
-                End If
-            Next R
-            If deleteCol Then
-                ws.Columns(col).Delete
+        Next R
+        If deleteCol Then
+            ws.Columns(col).Delete
+        End If
+    Next col
+    
+    For col = lastCol To 2 Step 1
+        deleteCol = True
+        For R = 2 To lastRow
+            If (quantity = "ext" Or quantity = "opt") And ws.Cells(R, col).Value > MaxValue Then
+                deleteCol = False
+                Exit For
             End If
-        Next col
-    End If
+        Next R
+        If deleteCol Then
+            ws.Columns(col).Delete
+        End If
+    Next col
     
     ' Count columns
     lastCol = ws.Cells(1, ws.Columns.Count).End(xlToLeft).Column
@@ -348,12 +346,12 @@ Sub PlotGraphs(ws As Worksheet, highlightedCols As Collection, lastRow As Long)
     For Each col In highlightedCols
         ' Define range of the current highlighted column
         Set chartRange = ws.Range(ws.Cells(2, col), ws.Cells(lastRow, col))  ' Start from the second row to avoid the header
-        
+
         ' Create a new chart object
         Set chartObj = chartSheet.ChartObjects.Add(Left:=10, Width:=400, Top:=chartTop, Height:=200)
         chartTop = chartTop + 220 ' Adjust the top position for the next chart
 
-        With chartObj.Chart
+        With chartObj.chart
             ' Clear existing data series
             Do While .SeriesCollection.Count > 0
                 .SeriesCollection(1).Delete

@@ -43,12 +43,12 @@ Sub ExportChartsAsImages()
     i = 1
     For Each chtObj In ws.ChartObjects
         ' If the chart is empty, skip the export
-        If chtObj.Chart.SeriesCollection.Count > 0 Then
+        If chtObj.chart.SeriesCollection.Count > 0 Then
             ' Create a new temporary workbook
             Set tempWorkbook = Workbooks.Add
 
             ' Copy the chart object to the temp workbook's first sheet
-            chtObj.Chart.ChartArea.Copy
+            chtObj.chart.ChartArea.Copy
 
             tempWorkbook.Sheets(1).Paste
             DoEvents
@@ -57,7 +57,7 @@ Sub ExportChartsAsImages()
             fileName = folderPath & "Chart_" & i & ".png"
 
             ' Export the chart from the temp workbook to a file
-            tempWorkbook.Sheets(1).ChartObjects(1).Chart.Export fileName:=fileName
+            tempWorkbook.Sheets(1).ChartObjects(1).chart.Export fileName:=fileName
 
             ' Close and delete the temporary workbook
             tempWorkbook.Close SaveChanges:=False
