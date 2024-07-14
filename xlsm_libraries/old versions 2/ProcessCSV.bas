@@ -350,8 +350,8 @@ Sub PlotGraphs(ws As Worksheet, highlightedCols As Collection, lastRow As Long)
         Set chartRange = ws.Range(ws.Cells(2, col), ws.Cells(lastRow, col))  ' Start from the second row to avoid the header
         
         ' Create a new chart object
-        Set chartObj = chartSheet.ChartObjects.Add(Left:=10, Width:=320, Top:=chartTop, Height:=240)
-        chartTop = chartTop + 260 ' Adjust the top position for the next chart
+        Set chartObj = chartSheet.ChartObjects.Add(Left:=10, Width:=400, Top:=chartTop, Height:=200)
+        chartTop = chartTop + 220 ' Adjust the top position for the next chart
 
         With chartObj.Chart
             ' Clear existing data series
