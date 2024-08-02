@@ -6,7 +6,7 @@ Gui, Add, Text, x12 y19 w160 h30 +Center, Выберите параметр`, в
 Gui, Add, DropDownList, x12 y59 w160 h60 vQuantity, VISIBILITY|EXTINCTION COEFFICIENT|OPTICAL DENSITY
 Gui, Add, Text, x12 y109 w160 h40 +Center, Введите высоту помещения`, в котором требуется определить tпор:
 Gui, Add, Edit, x62 y159 w80 h20 vHZ, 
-Gui, Add, Button, x12 y349 w160 h30 gOkButton, OK
+Gui, Add, Button, x12 y409 w160 h30 gOkButton, OK
 Gui, Add, Text, x12 y159 w40 h20 , Hпом =
 Gui, Add, Text, x152 y159 w20 h20 +Left, м
 Gui, Add, Text, x12 y209 w160 h40 +Center, Введите абсолютную отметку пола помещения:
@@ -16,12 +16,29 @@ Gui, Add, Text, x12 y259 w40 h20 , Zпом =
 Gui, Add, Progress, x12 y89 w160 h10 vQuantityProgressBar, 100
 Gui, Add, Progress, x12 y189 w160 h10 vHZProgressBar, 100
 Gui, Add, Progress, x12 y289 w160 h10 vZhProgressBar, 100
+Gui, Add, Checkbox, x12 y309 w200 h60 gChckOnlyOne vOnlyOne, Помещение подлежит оборудованию 1 пожарным извещателем
+Gui, Add, Edit, x12 y369 w80 h20 vFpom
+Gui, Add, Text, x102 y370 , м2
 
-Gui, Show, x130 y134 h408 w224, Isert_Devc_v0.3.0
+Gui, Show, x130 y134 h468 w184, Insert_DEVC_v0.3.1
 Return
+
+ChckOnlyOne:
+	Gui, Submit, NoHide
+	Return
 
 OkButton:
     Gui, Submit, NoHide
+	
+	If (OnlyOne = 1)
+	{
+		If (Fpom = "")
+		{
+			MsgBox, % "Введите значение площади помещения"
+			Return	;	Return to allow further actions without exiting the program
+		}
+		IniWrite, %Fpom%, %A_ScriptDir%\IniFpom.ini, IniFpom, Fpom
+	}
 	
     if (Quantity = "")
     {

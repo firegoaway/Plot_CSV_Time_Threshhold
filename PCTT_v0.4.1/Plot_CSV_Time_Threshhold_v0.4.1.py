@@ -19,34 +19,41 @@ import matplotlib.pyplot as plt
 # Матан
 import math
 
-# Начнём с простого GUI
+# Простой GUI
 class MultiInputWindow(tk.Tk):
-    def __init__(self, H=None, Cs=None, threshold=None):
+    def __init__(self, H=None, Cs=None, threshold=None, Fpom=None):
         super().__init__()
         self.title("Parse_CSV_DEVC")
         
+        self.Fpom = Fpom
         self.H = H
         self.Cs = Cs
         self.file_path = None
         self.threshold = None
         
-        ttk.Label(self, text="Hпом = ").grid(row=0, column=0, padx=10, pady=10)
+        ttk.Label(self, text="Fпом = ").grid(row=0, column=0, padx=10, pady=10)
+        self.Fpom_entry = ttk.Entry(self)
+        if Fpom is not None:
+            self.Fpom_entry.insert(0, Fpom)
+        self.Fpom_entry.grid(row=0, column=1, padx=10, pady=10)
+        
+        ttk.Label(self, text="Hпом = ").grid(row=1, column=0, padx=10, pady=10)
         self.H_entry = ttk.Entry(self)
         if H is not None:
             self.H_entry.insert(0, H)
-        self.H_entry.grid(row=0, column=1, padx=10, pady=10)
+        self.H_entry.grid(row=1, column=1, padx=10, pady=10)
         
-        ttk.Label(self, text="Cs = ").grid(row=1, column=0, padx=10, pady=10)
+        ttk.Label(self, text="Cs = ").grid(row=2, column=0, padx=10, pady=10)
         self.Cs_entry = ttk.Entry(self)
         if Cs is not None:
             self.Cs_entry.insert(0, Cs)
-        self.Cs_entry.grid(row=1, column=1, padx=10, pady=10)
+        self.Cs_entry.grid(row=2, column=1, padx=10, pady=10)
         
-        ttk.Label(self, text="Предельное значение параметра, воздействующего на ИП ДОТ:").grid(row=2, column=0, padx=10, pady=10)
+        ttk.Label(self, text="Предельное значение параметра, воздействующего на ИП ДОТ:").grid(row=3, column=0, padx=10, pady=10)
         self.threshold_entry = ttk.Entry(self)
         if threshold is not None:
             self.threshold_entry.insert(0, threshold)
-        self.threshold_entry.grid(row=2, column=1, padx=10, pady=10)
+        self.threshold_entry.grid(row=3, column=1, padx=10, pady=10)
         
         ttk.Button(self, text="Выберите CSV файл", command=self.select_file).grid(row=4, column=0, columnspan=2, padx=10, pady=10)
         
@@ -61,10 +68,11 @@ class MultiInputWindow(tk.Tk):
     
     def submit(self):
         try:
+            self.Fpom = float(self.Fpom_entry.get())
             self.H = float(self.H_entry.get())
             self.Cs = float(self.Cs_entry.get())
             self.threshold = float(self.threshold_entry.get())
-            if self.file_path and self.H and self.threshold and self.Cs is not None:
+            if self.file_path and self.H and self.threshold and self.Cs and self.Fpom is not None:
                 self.destroy()
             else:
                 raise ValueError("Заполните все поля!")
@@ -73,17 +81,25 @@ class MultiInputWindow(tk.Tk):
 
 config = configparser.ConfigParser()
 
+file_IniFpom = 'IniFpom.ini'
 file_IniHZ = 'IniHZ.ini'
 file_InideltaZ = 'InideltaZ.ini'
 file_IniSetpoint = 'IniSetpoint.ini'
 file_IniQuantity = 'IniQuantity.ini'
 
+value_IniFpom = None
 value_IniHZ = None
 value_InideltaZ = None
 value_IniSetpoint = None
 value_IniQuantity = None
 
-if os.path.isfile(file_IniHZ) and os.path.isfile(file_InideltaZ) and os.path.isfile(file_IniSetpoint):
+if os.path.isfile(file_IniHZ) and os.path.isfile(file_InideltaZ) and os.path.isfile(file_IniSetpoint) and os.path.isfile(file_IniFpom):
+    try:
+        config.read(file_IniFpom, encoding='utf-16')
+        value_IniFpom = config['IniFpom']['Fpom']
+    except Exception as e:
+        print(f"Error reading Fpom value from {file_IniFpom}: {e}")
+    
     try:
         config.read(file_IniHZ, encoding='utf-16')
         value_IniHZ = config['IniHZ']['HZ']
@@ -108,12 +124,13 @@ if os.path.isfile(file_IniHZ) and os.path.isfile(file_InideltaZ) and os.path.isf
     except Exception as e:
         print(f"Error reading Quantity value from {file_IniQuantity}: {e}")
 
-    input_window = MultiInputWindow(H=value_IniHZ, Cs=value_InideltaZ, threshold=value_IniSetpoint)
+    input_window = MultiInputWindow(H=value_IniHZ, Cs=value_InideltaZ, threshold=value_IniSetpoint, Fpom=value_IniFpom)
 else:
     input_window = MultiInputWindow()
 
 input_window.mainloop()
 
+input_Fpom = input_window.Fpom
 input_file_path = input_window.file_path
 input_H = input_window.H
 input_Cs = input_window.Cs
@@ -132,8 +149,14 @@ elif input_H > 10:
 
 L = R * math.sqrt(2)
 print(f'L = {L}')
-F = math.ceil((math.pi * (L**2) / 4))
-print(f'F = {F}')
+
+if Fpom is None:
+    F = math.ceil((math.pi * (L**2) / 4))
+    print(f'F = {F}')
+else:
+    F = Fpom
+    print(f'F = {Fpom}')
+
 Cc = math.ceil(F / input_Cs)
 print(f'Cc = {Cc}')
 
