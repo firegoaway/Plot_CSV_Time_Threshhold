@@ -159,7 +159,6 @@ print(f'L = {L}')
 if input_window.Fpom and input_window.Fpom != 0:
     F = input_window.Fpom
     print(f'F (используем значение из GUI) = {F}')
-
 else:
     F = math.ceil((math.pi * (L**2) / 4))
     print(f'F (по умолчанию) = {F}')
@@ -237,7 +236,7 @@ if input_file_path:
         measure_units = "Нп/м"
     
     plt.plot(relevant_time_values, deff_values, color='black', linewidth=5, label='dэфф (м)')
-    plt.axhline(y=L, color='green', linestyle='--', lw=3, label=f'dэфф = {L:.3f} (м)')
+    plt.axhline(y=L, color='green', linestyle='--', lw=3, label=f'dэфф = {max(deff_values):.3f} (м)')
     
     plt.axhline(y=input_threshold, color='blue', linestyle='--', lw=3, label=f'Крит. знач. параметра = {input_threshold:.3f} ({measure_units})')
     plt.xlabel('Время (сек)')
