@@ -13,7 +13,7 @@ import os
 
 # Графики
 import matplotlib
-matplotlib.use('TkAgg')
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 # Матан
@@ -23,7 +23,9 @@ import math
 class MultiInputWindow(tk.Tk):
     def __init__(self, H=None, Cs=None, threshold=None, Fpom=None):
         super().__init__()
-        self.title("Parse_CSV_DEVC")
+        self.title("PCTT v0.5.0")
+        self.iconbitmap('.gitpics\\pctt.ico')
+        self.wm_iconbitmap('.gitpics\\pctt.ico')
         
         self.H = H
         self.Cs = Cs
@@ -97,6 +99,10 @@ value_IniSetpoint = None
 value_IniQuantity = None
 value_IniFpom = None
 
+def addToClipBoard(text):
+    command = 'echo ' + text.strip() + '| clip'
+    os.system(command)
+    
 if os.path.isfile(file_IniHZ) and os.path.isfile(file_InideltaZ) and os.path.isfile(file_IniSetpoint):
     try:
         config.read(file_IniHZ, encoding='utf-16')
@@ -216,7 +222,14 @@ if input_file_path:
     relevant_time_values = time_values[:len(deff_values)]
     devc_data = {headers[i]: [row[i] for row in filtered_data] for i in valid_columns if headers[i] != 'Time'}
     
-    plt.figure(figsize=(10, 6))
+    # Обозначаем пути для сохранения картинок
+    output_folder_path = os.path.normpath(os.path.join(os.path.dirname(input_file_path), '..', '..', '..', '..'))
+    second_folder_name = os.path.basename(os.path.normpath(os.path.join(os.path.dirname(input_file_path), '..', '..')))
+    output_file_name = f"deff_{second_folder_name}_plot.png"
+    output_file_path = os.path.join(output_folder_path, output_file_name)
+
+    # Создаем полотно
+    plt.figure(figsize=(12,4))
     
     for header, values in devc_data.items():
         plt.plot(time_values, values)
@@ -225,7 +238,7 @@ if input_file_path:
         plt.axvline(x=critical_time, color='red', linestyle='--', lw=3, label=f'tпор = {critical_time:.2f} (сек)')
     else:
         messagebox.showinfo("Проверка данных", "Проверьте введённые данные. Возможно вы неправильно указали предельное значение параметра, воздействующего на ИП ДОТ.")
-        print("critical_time не найдено.")
+        print("Значение critical_time не найдено.")
     
     measure_units = ""
     if (quantity == "VISIBILITY"):
@@ -237,11 +250,15 @@ if input_file_path:
     
     plt.plot(relevant_time_values, deff_values, color='black', linewidth=5, label='dэфф (м)')
     plt.axhline(y=L, color='green', linestyle='--', lw=3, label=f'dэфф = {max(deff_values):.3f} (м)')
-    
     plt.axhline(y=input_threshold, color='blue', linestyle='--', lw=3, label=f'Крит. знач. параметра = {input_threshold:.3f} ({measure_units})')
     plt.xlabel('Время (сек)')
     plt.ylabel('Значение параметра')
-    plt.title(f'График dэфф и параметра, воздействующего на ИП ДОТ, во всех точках в области F')
+    plt.title(f'График dэфф и параметра,\nвоздействующего на ИП ДОТ, во всех точках в области F', fontsize=12)
     plt.grid(True)
-    plt.legend()
-    plt.show()
+    plt.legend(loc='right')
+    
+    addToClipBoard(second_folder_name)
+
+    # Сохраняем график в изображение, GUI не отображаем
+    plt.savefig(output_file_path, bbox_inches='tight', format='png')  # Можно добавить dpi=300 для большего разрешения картинок
+    plt.close()  # Закрываем инстанс, освобождаем память
