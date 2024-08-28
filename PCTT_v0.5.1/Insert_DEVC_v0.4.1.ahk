@@ -6,7 +6,7 @@ Gui, Add, Text, x12 y19 w160 h30 +Center, Выберите параметр`, в
 Gui, Add, DropDownList, x12 y59 w160 h60 vQuantity, VISIBILITY|EXTINCTION COEFFICIENT|OPTICAL DENSITY
 Gui, Add, Text, x12 y109 w160 h40 +Center, Введите высоту помещения`, в котором требуется определить tпор:
 Gui, Add, Edit, x62 y159 w80 h20 vHZ, 
-Gui, Add, Button, x12 y409 w160 h30 gOkButton, OK
+Gui, Add, Button, x12 y409 w160 h30 gOkButton, Применить
 Gui, Add, Text, x12 y159 w40 h20 , Hпом =
 Gui, Add, Text, x152 y159 w20 h20 +Left, м
 Gui, Add, Text, x12 y209 w160 h40 +Center, Введите абсолютную отметку пола помещения:
@@ -20,7 +20,7 @@ Gui, Add, Checkbox, x12 y309 w200 h60 gChckOnlyOne vOnlyOne, Помещение 
 Gui, Add, Edit, x12 y369 w80 h20 vFpom
 Gui, Add, Text, x102 y370 , м2
 
-Gui, Show, x130 y134 h468 w184, Insert_DEVC_v0.4.0
+Gui, Show, x130 y134 h468 w184, Insert_DEVC_v0.4.1
 Return
 
 ChckOnlyOne:

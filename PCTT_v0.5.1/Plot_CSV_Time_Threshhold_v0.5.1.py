@@ -23,7 +23,7 @@ import math
 class MultiInputWindow(tk.Tk):
     def __init__(self, H=None, Cs=None, threshold=None, Fpom=None):
         super().__init__()
-        self.title("PCTT v0.5.0")
+        self.title("PCTT v0.5.1")
         self.iconbitmap('.gitpics\\pctt.ico')
         self.wm_iconbitmap('.gitpics\\pctt.ico')
         
@@ -142,9 +142,9 @@ else:
 input_window.mainloop()
 
 input_file_path = input_window.file_path
-input_H = input_window.H
-input_Cs = input_window.Cs
-input_threshold = input_window.threshold
+input_H = float(input_window.H)
+input_Cs = float(input_window.Cs)
+input_threshold = float(input_window.threshold)
 quantity = value_IniQuantity
 input_Fpom = input_window.Fpom
 
@@ -161,10 +161,11 @@ elif input_H > 10:
 L = R * math.sqrt(2)
 print(f'L = {L}')
 
-# Use Fpom value from GUI if it's valid and non-zero, otherwise use default F
-if input_window.Fpom and input_window.Fpom != 0:
-    F = input_window.Fpom
-    print(f'F (используем значение из GUI) = {F}')
+# Используем значение Fpom из GUI, Если оно валидно и не ранво 0, в противном случае используем значение F по умолчанию
+if input_Fpom and input_Fpom != 0:
+    input_Fpom = float(input_Fpom)
+    F = input_Fpom
+    print(f'F (используем значение Fпом = {input_Fpom} из GUI) = {F}')
 else:
     F = math.ceil((math.pi * (L**2) / 4))
     print(f'F (по умолчанию) = {F}')
@@ -248,14 +249,33 @@ if input_file_path:
     elif (quantity == "OPTICAL DENSITY"):
         measure_units = "Нп/м"
     
+    f1 = critical_time + 60 + 20
+    f2f4 = critical_time + 30 + 20
+    
     plt.plot(relevant_time_values, deff_values, color='black', linewidth=5, label='dэфф (м)')
     plt.axhline(y=L, color='green', linestyle='--', lw=3, label=f'dэфф = {max(deff_values):.3f} (м)')
     plt.axhline(y=input_threshold, color='blue', linestyle='--', lw=3, label=f'Крит. знач. параметра = {input_threshold:.3f} ({measure_units})')
-    plt.xlabel('Время (сек)')
-    plt.ylabel('Значение параметра')
-    plt.title(f'График dэфф и параметра,\nвоздействующего на ИП ДОТ, во всех точках в области F', fontsize=12)
+    plt.xlabel(f'Время (сек)\n\nВремя начала эвакуации tнэ для Ф1 = {critical_time:.2f} + 60 + 0 + 20 = {f1:.2f} (сек)\nВремя начала эвакуации tнэ для Ф2-Ф5 = {critical_time:.2f} + 30 + 0 + 20 = {f2f4:.2f} (сек)')
+    plt.ylabel(f'Значение параметра ({measure_units})')
+    plt.title(f'График dэфф и значений параметра,\nвоздействующего на ИП ДОТ, во всех точках в области F', fontsize=12)
     plt.grid(True)
-    plt.legend(loc='right')
+    plt.legend(loc='center left')
+    
+    # Берём min и max от d_eff для скалировпния по оси Y
+    min_deff = min(deff_values)
+    max_deff = max(deff_values)
+    
+    # Берём min = 0 и max = critical_time для скалировпния по оси X
+    min_time = 0
+    max_time = critical_time
+
+    plt.ylim(bottom=min_deff - (0.1 * (max_deff - min_deff)), 
+             top=max_deff + (0.1 * (max_deff - min_deff)))  # Добавляем сверху и снизу небольшие пустоты
+
+    plt.xlim(left=min_time - (0.1 * (max_time - min_time)), 
+             right=max_time + (0.1 * (max_time - min_time)))  # Добавляем слева и справа небольшие пустоты
+             
+    # https://stackoverflow.com/questions/36162414/how-to-add-bold-annotated-text-to-a-plot
     
     addToClipBoard(second_folder_name)
 
