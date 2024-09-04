@@ -23,9 +23,14 @@ import math
 class MultiInputWindow(tk.Tk):
     def __init__(self, H=None, Cs=None, threshold=None, Fpom=None):
         super().__init__()
+        
+        current_directory = os.path.dirname(__file__)
+        parent_directory = os.path.abspath(os.path.join(current_directory, os.pardir))
+        icon_path = os.path.join(parent_directory, '.gitpics', 'pctt.ico')
+        
         self.title("PCTT v0.5.1")
-        self.iconbitmap('.gitpics\\pctt.ico')
-        self.wm_iconbitmap('.gitpics\\pctt.ico')
+        self.iconbitmap(icon_path)
+        self.wm_iconbitmap(icon_path)
         
         self.H = H
         self.Cs = Cs
@@ -87,11 +92,21 @@ class MultiInputWindow(tk.Tk):
 
 config = configparser.ConfigParser()
 
-file_IniHZ = 'IniHZ.ini'
-file_InideltaZ = 'InideltaZ.ini'
-file_IniSetpoint = 'IniSetpoint.ini'
-file_IniQuantity = 'IniQuantity.ini'
-file_IniFpom = 'IniFpom.ini'
+current_directory = os.path.dirname(__file__)
+parent_directory = os.path.abspath(os.path.join(current_directory, os.pardir))
+inis_path = os.path.join(parent_directory, 'inis')
+        
+iniHZ_path = os.path.join(inis_path, 'IniHZ.ini')
+InideltaZ_path = os.path.join(inis_path, 'InideltaZ.ini')
+IniSetpoint_path = os.path.join(inis_path, 'IniSetpoint.ini')
+IniQuantity_path = os.path.join(inis_path, 'IniQuantity.ini')
+IniFpom_path = os.path.join(inis_path, 'IniFpom.ini')
+
+file_IniHZ = iniHZ_path
+file_InideltaZ = InideltaZ_path
+file_IniSetpoint = IniSetpoint_path
+file_IniQuantity = IniQuantity_path
+file_IniFpom = IniFpom_path
 
 value_IniHZ = None
 value_InideltaZ = None
@@ -158,15 +173,15 @@ elif input_H > 6 and input_H <= 10:
 elif input_H > 10:
     R = 5.35
 
-L = R * math.sqrt(2)
-print(f'L = {L}')
-
 # Используем значение Fpom из GUI, Если оно валидно и не ранво 0, в противном случае используем значение F по умолчанию
 if input_Fpom and input_Fpom != 0:
     input_Fpom = float(input_Fpom)
     F = input_Fpom
+    L = deff
     print(f'F (используем значение Fпом = {input_Fpom} из GUI) = {F}')
 else:
+    L = R * math.sqrt(2)
+    print(f'L = {L}')
     F = math.ceil((math.pi * (L**2) / 4))
     print(f'F (по умолчанию) = {F}')
 

@@ -37,7 +37,7 @@ OkButton:
 			MsgBox, % "Введите значение площади помещения"
 			Return	;	Return to allow further actions without exiting the program
 		}
-		IniWrite, %Fpom%, %A_ScriptDir%\IniFpom.ini, IniFpom, Fpom
+		IniWrite, %Fpom%, %A_ScriptDir%\..\inis\IniFpom.ini, IniFpom, Fpom
 	}
 	
     if (Quantity = "")
@@ -45,14 +45,14 @@ OkButton:
         MsgBox, % "Выберите значение параметра, воздействующего на ИП ДОТ!"
         Return ; Return to allow further actions without exiting the program
     }
-    IniWrite, %Quantity%, %A_ScriptDir%\IniQuantity.ini, IniQuantity, Quantity
+    IniWrite, %Quantity%, %A_ScriptDir%\..\inis\IniQuantity.ini, IniQuantity, Quantity
 	
     if (HZ = "") || (HZ <= 0)
     {
         MsgBox, % "Введите достоверное значение высоты!"
         Return ; Return to allow further actions without exiting the program
     }
-    IniWrite, %HZ%, %A_ScriptDir%\IniHZ.ini, IniHZ, HZ
+    IniWrite, %HZ%, %A_ScriptDir%\..\inis\IniHZ.ini, IniHZ, HZ
     ; MsgBox, % "Параметр: " . Quantity . "`nВысота: " . HZ
 	
 	if (Zh = "")
@@ -60,13 +60,13 @@ OkButton:
         MsgBox, % "Введите достоверное значение высотной отметки!"
         Return ; Return to allow further actions without exiting the program
     }
-    IniWrite, %Zh%, %A_ScriptDir%\IniZh.ini, IniZh, Zh
+    IniWrite, %Zh%, %A_ScriptDir%\..\inis\IniZh.ini, IniZh, Zh
     ; MsgBox, % "Высота: " . HZ . "`nВысотная отметка: " . Zh
 	
     Gui, Hide
 
     ; Назначаем файлы ввода и вывода
-    IniRead, filePath, %A_ScriptDir%\filePath.ini, filePath, filePath
+    IniRead, filePath, %A_ScriptDir%\..\inis\filePath.ini, filePath, filePath
 
     folderPath := RegExReplace(filePath, "(.*\\).*", "$1")
         folderPath := SubStr(folderPath, 1, StrLen(folderPath) - 1)
@@ -94,19 +94,19 @@ OkButton:
     {
         setpoint := 28.5709
         trip_direction := -1
-        IniWrite, %setpoint%, %A_ScriptDir%\IniSetpoint.ini, IniSetpoint, setpoint
+        IniWrite, %setpoint%, %A_ScriptDir%\..\inis\IniSetpoint.ini, IniSetpoint, setpoint
     }
     else if (Quantity = "EXTINCTION COEFFICIENT")
     {
         setpoint := 0.2
         trip_direction := 1
-        IniWrite, %setpoint%, %A_ScriptDir%\IniSetpoint.ini, IniSetpoint, setpoint
+        IniWrite, %setpoint%, %A_ScriptDir%\..\inis\IniSetpoint.ini, IniSetpoint, setpoint
     }
     else if (Quantity = "OPTICAL DENSITY")
     {
         setpoint := 0.023
         trip_direction := 1
-        IniWrite, %setpoint%, %A_ScriptDir%\IniSetpoint.ini, IniSetpoint, setpoint
+        IniWrite, %setpoint%, %A_ScriptDir%\..\inis\IniSetpoint.ini, IniSetpoint, setpoint
     }
 
     loop, %lines0%
@@ -160,7 +160,7 @@ OkButton:
         }
         newContents .= line . "`n"
     }
-    IniWrite, %deltaZ%, %A_ScriptDir%\InideltaZ.ini, InideltaZ, deltaZ
+    IniWrite, %deltaZ%, %A_ScriptDir%\..\inis\InideltaZ.ini, InideltaZ, deltaZ
     
     FileAppend, %newContents%, %outputFile%
     ; MsgBox, Успешно! Новый файл создан: %outputFile%
