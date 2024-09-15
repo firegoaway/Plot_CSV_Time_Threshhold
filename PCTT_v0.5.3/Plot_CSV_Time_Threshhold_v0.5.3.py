@@ -30,7 +30,7 @@ class MultiInputWindow(tk.Tk):
         parent_directory = os.path.abspath(os.path.join(current_directory, os.pardir))
         icon_path = os.path.join(parent_directory, '.gitpics', 'pctt.ico')
 
-        self.title("PCTT v0.5.2")
+        self.title("PCTT v0.5.3")
         self.iconbitmap(icon_path)
         self.wm_iconbitmap(icon_path)
         
@@ -295,11 +295,68 @@ class MultiInputWindow(tk.Tk):
 
                 messagebox.showinfo("tпор", "Расчёт tпор завершён!")
                 
-                os.startfile(output_folder_path)
-                os.startfile(output_file_path)
-                
                 self.progress['value'] = 0  # ресетим прогресс бар
-                self.quit()
+                
+                #os.startfile(output_folder_path)
+                #os.startfile(output_file_path)
+                
+                def OpenPNG():
+                    os.startfile(output_file_path)
+
+                def OpenPNGfolder():
+                    os.startfile(output_folder_path)
+
+                def Close():
+                    self.quit()  # Закрываем основное окно tkinter
+
+                custom_message_box(OpenPNG, OpenPNGfolder, Close)
+
+def custom_message_box(callback_open_png, callback_open_folder, callback_close):
+    def on_open_png():
+        callback_open_png()
+        #top.destroy()
+    
+    def on_open_folder():
+        callback_open_folder()
+        #top.destroy()
+    
+    def on_close():
+        callback_close()
+        top.destroy()
+
+    top = Toplevel()
+    top.title("PCTT v0.5.3")
+    top.geometry("400x100")
+    
+    current_directory = os.path.dirname(__file__)
+    parent_directory = os.path.abspath(os.path.join(current_directory, os.pardir))
+    icon_path = os.path.join(parent_directory, '.gitpics', 'pctt.ico')
+    
+    top.iconbitmap(icon_path)
+    top.wm_iconbitmap(icon_path)
+    
+    top.overrideredirect(False)  # Скрываем стандартную рамку
+
+    label = Label(top, text="Выберите действие", padx=10, pady=10)
+    label.pack(pady=(10, 0))
+    
+    button_frame = ttk.Frame(top)
+    button_frame.pack(pady=10)
+    
+    Button(button_frame, text="Показать график dэфф", command=on_open_png).pack(side='left', padx=5)
+    Button(button_frame, text="Открыть папку с графиком", command=on_open_folder).pack(side='left', padx=5)
+    Button(button_frame, text="Выйти", command=on_close).pack(side='left', padx=5)
+    
+    top.update_idletasks()
+    width = top.winfo_width()
+    height = top.winfo_height()
+    x = (top.winfo_screenwidth() // 2) - (width // 2)
+    y = (top.winfo_screenheight() // 2) - (height // 2)
+    top.geometry(f'{width}x{height}+{x}+{y}')
+
+    top.transient()  # Поверх других окон
+    top.grab_set()  # Модальное окно
+    top.protocol("WM_DELETE_WINDOW", on_close)  # Закрытие окна
 
 def addToClipBoard(text):
     command = 'echo ' + text.strip() + '| clip'
