@@ -8,6 +8,7 @@ import tkinter as tk
 from tkinter import filedialog, messagebox
 from tkinter import ttk
 from tkinter import StringVar
+from tkinter import Tk, Toplevel, Button, Label
 
 # Словари
 import os
@@ -293,7 +294,9 @@ class MultiInputWindow(tk.Tk):
                 
                 plt.close()  # Закрываем инстанс, освобождаем память
 
-                messagebox.showinfo("tпор", "Расчёт tпор завершён!")
+                #messagebox.showinfo("tпор", "Расчёт tпор завершён!")
+                
+                self.withdraw() # Вырубаем GUI
                 
                 self.progress['value'] = 0  # ресетим прогресс бар
                 
@@ -310,6 +313,8 @@ class MultiInputWindow(tk.Tk):
                     self.quit()  # Закрываем основное окно tkinter
 
                 custom_message_box(OpenPNG, OpenPNGfolder, Close)
+                
+                #self.mainloop()
 
 def custom_message_box(callback_open_png, callback_open_folder, callback_close):
     def on_open_png():
