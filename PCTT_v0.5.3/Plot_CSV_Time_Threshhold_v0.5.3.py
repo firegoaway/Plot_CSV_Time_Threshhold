@@ -122,7 +122,6 @@ class MultiInputWindow(tk.Tk):
         if input_Fpom and input_Fpom != 0:
             input_Fpom = float(input_Fpom)
             F = input_Fpom
-            L = deff
             print(f'F (используем значение Fпом = {input_Fpom} из GUI) = {F}')
         else:
             L = R * math.sqrt(2)
@@ -188,6 +187,7 @@ class MultiInputWindow(tk.Tk):
                         break
                     else:
                         deff = math.sqrt((4 * (count * input_Cs)) / math.pi)
+                        L = deff
                         deff_values.append(deff)
                         self.progress['maximum'] = L
                         self.progress['value'] = deff
