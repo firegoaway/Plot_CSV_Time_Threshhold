@@ -31,7 +31,7 @@ class MultiInputWindow(tk.Tk):
         parent_directory = os.path.abspath(os.path.join(current_directory, os.pardir))
         icon_path = os.path.join(parent_directory, '.gitpics', 'pctt.ico')
 
-        self.title("PCTT v0.5.3")
+        self.title("PCTT v0.6.0")
         self.iconbitmap(icon_path)
         self.wm_iconbitmap(icon_path)
         
@@ -168,7 +168,7 @@ class MultiInputWindow(tk.Tk):
 
                     # Обновляем прогресс
                     self.progress['value'] = i + 1
-                    self.progress_label.config(text=f"Вычисляем количество точек в области F, значение параметра в которых достигло критической отметки: {i + 1} / {total_rows}")
+                    self.progress_label.config(text=f"Вычисляем количество точек в области F, значение параметра в которых достигло критической отметки: {i + 1} / {total_rows} / {Cc}")
                     self.update_idletasks()
 
                 time_index = valid_columns[headers.index('Time')]
@@ -210,26 +210,6 @@ class MultiInputWindow(tk.Tk):
                 second_folder_name = os.path.basename(os.path.normpath(os.path.join(os.path.dirname(input_file_path), '..', '..')))
                 output_file_name = f"deff_{second_folder_name}_plot.png"
                 output_file_path = os.path.join(output_folder_path, output_file_name)
-
-                # Создаем полотно
-                plt.figure(figsize=(12,4))
-                
-                for header, values in devc_data.items():
-                    plt.plot(time_values, values)
-                
-                self.progress['value'] = 55
-                self.progress_label.config(text="Подготавливаем график.")
-                self.update_idletasks()
-                
-                if critical_time is not None:
-                    plt.axvline(x=critical_time, color='red', linestyle='--', lw=3, label=f'tпор = {critical_time:.2f} (сек)')
-                else:
-                    messagebox.showinfo("Проверка данных", "Проверьте введённые данные. Возможно вы неправильно указали предельное значение параметра, воздействующего на ИП ДОТ.")
-                    print("Значение critical_time не найдено.")
-                
-                self.progress['value'] = 65
-                self.progress_label.config(text="Подготавливаем график..")
-                self.update_idletasks()
                 
                 measure_units = ""
                 if (self.quantity == "VISIBILITY"):
@@ -238,6 +218,50 @@ class MultiInputWindow(tk.Tk):
                     measure_units = "дБ/м"
                 elif (self.quantity == "OPTICAL DENSITY"):
                     measure_units = "Нп/м"
+
+                # Создаем полотно
+                plt.figure(figsize=(12,4))
+                
+                # Создаём вторую ось Y
+                ax1 = plt.gca()  # Get current axis
+                ax2 = ax1.twinx()  # Создаём твин-копию ax1
+                
+                total_cells = 0
+                filled_cells = 0
+                
+                # Для первой оси Y рисуем значения devc_data (каждой точки)
+                for header, values in devc_data.items():
+                    ax1.plot(time_values, values, linestyle='solid', lw=0.1)  # Используем ax1 как ось Y №1
+                    
+                    total_cells += len(header)
+                    filled_cells += sum(1 for value in header)
+                    
+                    self.progress['maximum'] = total_cells
+                    self.progress['value'] = filled_cells
+                    self.progress_label.config(text=f"Поиск ненулевых значений для вычисления tпор: {filled_cells} / {total_cells}")
+                    self.update_idletasks()
+
+                self.progress['maximum'] = 100
+                self.progress['value'] = 45
+                self.progress_label.config(text="Подготавливаем график.")
+                self.update_idletasks()
+                
+                # Рисуем значения d_eff на полотне ax2 с собственной осью Y
+                ax2.plot(relevant_time_values, deff_values, color='black', linewidth=5, label='dэфф (м)')
+                
+                if critical_time is not None:
+                    ax1.axvline(x=critical_time, color='red', linestyle='--', lw=3, label=f'tпор = {critical_time:.2f} (сек)')
+                else:
+                    messagebox.showinfo("Проверка данных", "Проверьте введённые данные. Возможно вы неправильно указали предельное значение параметра, воздействующего на ИП ДОТ.")
+                    print("Значение critical_time не найдено.")
+                
+                self.progress['value'] = 65
+                self.progress_label.config(text="Подготавливаем график..")
+                self.update_idletasks()
+                
+                # Назначаем строки заголовков для обеих осей Y
+                ax1.set_ylabel(f'Значение параметра ({measure_units})')
+                ax2.set_ylabel('dэфф (м)')
                 
                 f1 = critical_time + 60 + 20
                 f2f4 = critical_time + 30 + 20
@@ -246,40 +270,35 @@ class MultiInputWindow(tk.Tk):
                 self.progress_label.config(text="Подготавливаем график...")
                 self.update_idletasks()
                 
-                plt.plot(relevant_time_values, deff_values, color='black', linewidth=5, label='dэфф (м)')
-                plt.axhline(y=L, color='green', linestyle='--', lw=3, label=f'dэфф = {max(deff_values):.3f} (м)')
-                plt.axhline(y=input_threshold, color='blue', linestyle='--', lw=3, label=f'Крит. знач. параметра = {input_threshold:.3f} ({measure_units})')
-                plt.xlabel(f'Время (сек)\n\nВремя начала эвакуации tнэ для Ф1 = {critical_time:.2f} + 60 + 0 + 20 = {f1:.2f} (сек)\nВремя начала эвакуации tнэ для Ф2-Ф5 = {critical_time:.2f} + 30 + 0 + 20 = {f2f4:.2f} (сек)')
-                plt.ylabel(f'Значение параметра ({measure_units})')
-                plt.title(f'График dэфф и значений параметра,\nвоздействующего на ИП ДОТ, во всех точках в области F', fontsize=12)
-                plt.grid(True)
-                plt.legend(loc='center left')
+                # Добавляем горизонтальную линию для L и input_threshold на соответствующих осях
+                ax1.axhline(y=input_threshold, color='blue', linestyle='--', lw=3, label=f'Крит. знач. параметра = {input_threshold:.3f} ({measure_units})', alpha=0.5)
+                ax2.axhline(y=L, color='green', linestyle='--', lw=3, label=f'dэфф = {max(deff_values):.3f} (м)', alpha=0.5)
                 
-                self.progress['value'] = 94
+                self.progress['value'] = 84
                 self.progress_label.config(text="Подготавливаем график....")
                 self.update_idletasks()
                 
-                # Берём min и max от d_eff для скалировпния по оси Y
-                min_deff = min(deff_values)
-                max_deff = max(deff_values)
+                # Периферия
+                ax1.set_xlabel(f'Время (сек)\n\nВремя начала эвакуации tнэ для Ф1 = {critical_time:.2f} + 60 + 0 + 20 = {f1:.2f} (сек) \nВремя начала эвакуации tнэ для Ф2-Ф5 = {critical_time:.2f} + 30 + 0 + 20 = {f2f4:.2f} (сек)')
+                plt.title(f'График dэфф и значений параметра,\nвоздействующего на ИП ДОТ, во всех точках в области F', fontsize=12)
+                plt.grid(True)
+                lines1, labels1 = ax1.get_legend_handles_labels()
+                lines2, labels2 = ax2.get_legend_handles_labels()
+                ax1.legend(lines1 + lines2, labels1 + labels2, loc='center left')
                 
-                self.progress['value'] = 99
-                self.progress_label.config(text="Подготавливаем график.....")
-                self.update_idletasks()
-                
-                # Берём min = 0 и max = critical_time для скалировпния по оси X
-                min_time = 0
-                max_time = critical_time
-                
-                self.progress['value'] = 99.9
+                self.progress['value'] = 90
                 self.progress_label.config(text="Подготавливаем график......")
                 self.update_idletasks()
 
-                plt.ylim(bottom=min_deff - (0.1 * (max_deff - min_deff)), 
-                         top=max_deff + (0.1 * (max_deff - min_deff)))  # Добавляем сверху и снизу небольшие пустоты
-
-                plt.xlim(left=min_time - (0.1 * (max_time - min_time)), 
-                         right=max_time + (0.1 * (max_time - min_time)))  # Добавляем слева и справа небольшие пустоты
+                ax1.set_ylim(bottom=0, top=input_threshold * 1.1)
+                ax1.set_xlim(left=0, right=max(critical_time, 0) * 1.1)
+                
+                ax2.set_ylim(bottom=min(deff_values) * 0.9, top=max(deff_values) * 1.1)
+                ax2.set_xlim(left=0, right=max(critical_time, 0) * 1.1)
+                
+                self.progress['value'] = 90
+                self.progress_label.config(text="Подготавливаем график......")
+                self.update_idletasks()
                          
                 # https://stackoverflow.com/questions/36162414/how-to-add-bold-annotated-text-to-a-plot
                 
@@ -330,7 +349,7 @@ def custom_message_box(callback_open_png, callback_open_folder, callback_close):
         top.destroy()
 
     top = Toplevel()
-    top.title("PCTT v0.5.3")
+    top.title("PCTT v0.6.0")
     top.geometry("400x100")
     
     current_directory = os.path.dirname(__file__)
