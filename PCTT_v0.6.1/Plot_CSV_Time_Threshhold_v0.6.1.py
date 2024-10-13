@@ -31,7 +31,7 @@ class MultiInputWindow(tk.Tk):
         parent_directory = os.path.abspath(os.path.join(current_directory, os.pardir))
         icon_path = os.path.join(parent_directory, '.gitpics', 'pctt.ico')
 
-        self.title("PCTT v0.6.0")
+        self.title("PCTT v0.6.1")
         self.iconbitmap(icon_path)
         self.wm_iconbitmap(icon_path)
         
@@ -196,7 +196,10 @@ class MultiInputWindow(tk.Tk):
 
                 time_values = [row[time_index] for row in filtered_data if len(row) > time_index]
                 relevant_time_values = time_values[:len(deff_values)]
-                devc_data = {headers[i]: [row[i] for row in filtered_data] for i in valid_columns if headers[i] != 'Time'}
+                devc_data = {}
+                for index in valid_columns:
+                    if index < len(headers):
+                        devc_data[headers[index]] = [row[index] for row in filtered_data if index < len(row)]
                 
                 self.progress['value'] = 0
                 self.progress['maximum'] = 100
@@ -231,7 +234,10 @@ class MultiInputWindow(tk.Tk):
                 
                 # Для первой оси Y рисуем значения devc_data (каждой точки)
                 for header, values in devc_data.items():
-                    ax1.plot(time_values, values, linestyle='solid', lw=0.1)  # Используем ax1 как ось Y №1
+                    if len(time_values) != len(values):
+                        print(f"Skipping plot due to dimension mismatch: {len(time_values)} (time) vs {len(values)} (values)")
+                    else:
+                        ax1.plot(time_values, values, linestyle='solid', lw=0.1)
                     
                     total_cells += len(header)
                     filled_cells += sum(1 for value in header)
@@ -349,7 +355,7 @@ def custom_message_box(callback_open_png, callback_open_folder, callback_close):
         top.destroy()
 
     top = Toplevel()
-    top.title("PCTT v0.6.0")
+    top.title("PCTT v0.6.1")
     top.geometry("400x100")
     
     current_directory = os.path.dirname(__file__)
