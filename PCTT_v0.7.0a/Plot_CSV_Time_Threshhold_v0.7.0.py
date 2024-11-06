@@ -3,6 +3,11 @@ import csv
 import configparser
 import re
 
+# Функторы
+import dask.dataframe as dd
+from dask.diagnostics import ProgressBar
+from tqdm import tqdm
+
 # GUI
 import tkinter as tk
 from tkinter import filedialog, messagebox
@@ -31,7 +36,7 @@ class MultiInputWindow(tk.Tk):
         parent_directory = os.path.abspath(os.path.join(current_directory, os.pardir))
         icon_path = os.path.join(parent_directory, '.gitpics', 'pctt.ico')
 
-        self.title("PCTT v0.6.1")
+        self.title("PCTT v0.7.0")
         self.iconbitmap(icon_path)
         self.wm_iconbitmap(icon_path)
         
@@ -83,6 +88,21 @@ class MultiInputWindow(tk.Tk):
     def select_file(self):
         self.file_path = filedialog.askopenfilename(filetypes=[("Файлы формата CSV", "*.csv")])
         self.file_path_label.config(text=self.file_path if self.file_path else "")
+        
+        input_file_path = self.file_path
+        input_file_name = os.path.basename(input_file_path)
+        output_file_path = os.path.join(os.path.dirname(input_file_path), input_file_name.replace('.csv', '_output.csv'))
+        
+        remove_zero_only_columns(input_file_path, output_file_path)
+    
+        def remove_zero_only_columns(input_file_path, output_file_path):
+            df = dd.read_csv(input_file_path, sample=1000000)
+            def non_zero_columns(df_chunk):
+                return df_chunk.loc[:, (df_chunk != 0).any(axis=0)]
+            df_cleaned = df.map_partitions(non_zero_columns)
+            df_cleaned = df_cleaned.persist()
+            with ProgressBar():
+                df_cleaned.to_csv(output_file_path, single_file=True, index=False)
     
     def submit(self):
         try:
@@ -135,7 +155,7 @@ class MultiInputWindow(tk.Tk):
         if input_file_path:
             input_file_name = os.path.basename(input_file_path)
             output_file_path = os.path.join(os.path.dirname(input_file_path), input_file_name.replace('.csv', '_output.csv'))
-
+            
             def convert_scientific_to_float(value):
                 try:
                     return float(value)
@@ -165,12 +185,12 @@ class MultiInputWindow(tk.Tk):
                         with open(output_file_path, 'a', newline='') as outfile:
                             writer = csv.writer(outfile)
                             writer.writerow(filtered_row)
-
+                    
                     # Обновляем прогресс
                     self.progress['value'] = i + 1
                     self.progress_label.config(text=f"Вычисляем количество точек в области F, значение параметра в которых достигло критической отметки: {i + 1} / {total_rows} / {Cc}")
                     self.update_idletasks()
-
+                
                 time_index = valid_columns[headers.index('Time')]
                 critical_time = None
                 deff_values = []
@@ -355,7 +375,7 @@ def custom_message_box(callback_open_png, callback_open_folder, callback_close):
         top.destroy()
 
     top = Toplevel()
-    top.title("PCTT v0.6.1")
+    top.title("PCTT v0.7.0")
     top.geometry("400x100")
     
     current_directory = os.path.dirname(__file__)
