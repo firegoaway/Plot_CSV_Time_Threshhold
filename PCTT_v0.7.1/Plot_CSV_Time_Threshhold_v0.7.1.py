@@ -36,7 +36,7 @@ class MultiInputWindow(tk.Tk):
         parent_directory = os.path.abspath(os.path.join(current_directory, os.pardir))
         icon_path = os.path.join(parent_directory, '.gitpics', 'pctt.ico')
 
-        self.title("PCTT v0.7.0")
+        self.title("PCTT v0.7.1")
         self.iconbitmap(icon_path)
         self.wm_iconbitmap(icon_path)
         
@@ -60,7 +60,7 @@ class MultiInputWindow(tk.Tk):
             self.Cs_entry.insert(0, Cs)
         self.Cs_entry.grid(row=1, column=1, padx=10, pady=10)
 
-        ttk.Label(self, text="Предельное значение параметра, воздействующего на ИП ДОТ:").grid(row=2, column=0, padx=10, pady=10)
+        ttk.Label(self, text="Предельное значение параметра, воздействующего на пожарный извещатель:").grid(row=2, column=0, padx=10, pady=10)
         self.threshold_entry = ttk.Entry(self)
         if threshold is not None:
             self.threshold_entry.insert(0, threshold)
@@ -241,12 +241,16 @@ class MultiInputWindow(tk.Tk):
                     measure_units = "дБ/м"
                 elif (self.quantity == "OPTICAL DENSITY"):
                     measure_units = "Нп/м"
+                elif (self.quantity == "TEMPERATURE"):
+                    measure_units = "*С"
+                elif (self.quantity == "Аспирационный"):
+                    measure_units = "Нп/м"
 
                 # Создаем полотно
                 plt.figure(figsize=(12,4))
                 
                 # Создаём вторую ось Y
-                ax1 = plt.gca()  # Get current axis
+                ax1 = plt.gca()  # Берём текущую ось
                 ax2 = ax1.twinx()  # Создаём твин-копию ax1
                 
                 total_cells = 0
@@ -278,7 +282,7 @@ class MultiInputWindow(tk.Tk):
                 if critical_time is not None:
                     ax1.axvline(x=critical_time, color='red', linestyle='--', lw=3, label=f'tпор = {critical_time:.2f} (сек)')
                 else:
-                    messagebox.showinfo("Проверка данных", "Проверьте введённые данные. Возможно вы неправильно указали предельное значение параметра, воздействующего на ИП ДОТ.")
+                    messagebox.showinfo("Проверка данных", "Проверьте введённые данные. Возможно вы неправильно указали предельное значение параметра, воздействующего на пожарный извещатель.")
                     print("Значение critical_time не найдено.")
                 
                 self.progress['value'] = 65
@@ -306,7 +310,7 @@ class MultiInputWindow(tk.Tk):
                 
                 # Периферия
                 ax1.set_xlabel(f'Время (сек)\n\nВремя начала эвакуации tнэ для Ф1 = {critical_time:.2f} + 60 + 0 + 20 = {f1:.2f} (сек) \nВремя начала эвакуации tнэ для Ф2-Ф5 = {critical_time:.2f} + 30 + 0 + 20 = {f2f4:.2f} (сек)')
-                plt.title(f'График dэфф и значений параметра,\nвоздействующего на ИП ДОТ, во всех точках в области F', fontsize=12)
+                plt.title(f'График dэфф и значений параметра,\nвоздействующего на пожарный извещатель, во всех точках в области F', fontsize=12)
                 plt.grid(True)
                 lines1, labels1 = ax1.get_legend_handles_labels()
                 lines2, labels2 = ax2.get_legend_handles_labels()
@@ -375,7 +379,7 @@ def custom_message_box(callback_open_png, callback_open_folder, callback_close):
         top.destroy()
 
     top = Toplevel()
-    top.title("PCTT v0.7.0")
+    top.title("PCTT v0.7.1")
     top.geometry("400x100")
     
     current_directory = os.path.dirname(__file__)
