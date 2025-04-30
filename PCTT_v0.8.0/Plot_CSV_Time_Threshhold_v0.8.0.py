@@ -2,6 +2,7 @@
 import csv
 import configparser
 import re
+import sys
 
 # Функторы
 import dask.dataframe as dd
@@ -97,7 +98,7 @@ class MultiInputWindow(tk.Tk):
         
         self.quantity = quantity or value_IniQuantity
         self.H = H
-        self.Cs = Cs
+        self.Cs = Cs # Store the initial Cs value (might be None)
         self.file_path = None
         self.threshold = threshold
         self.Fpom = Fpom
@@ -166,12 +167,17 @@ class MultiInputWindow(tk.Tk):
         
         # Поле Cs
         ttk.Label(param_grid, text="Cs = ").grid(row=0, column=2, sticky=tk.W, padx=5, pady=8)
-        self.Cs_entry = ttk.Entry(param_grid, width=15)
-        if Cs is not None:
-            self.Cs_entry.insert(0, Cs)
+        self.Cs_entry = ttk.Entry(param_grid, width=15) # Restore original width
+        if self.Cs is not None: # Populate only if Cs has a value from ini
+            self.Cs_entry.insert(0, self.Cs)
         self.Cs_entry.grid(row=0, column=3, sticky=tk.W, padx=5, pady=8)
         ToolTip(self.Cs_entry, "Размер ячейки, м")
-        
+
+        # Button to calculate Cs from FDS
+        cs_calc_btn = ttk.Button(param_grid, text="...", width=3, command=self.get_cs_from_fds_ini) # Connect button here
+        cs_calc_btn.grid(row=0, column=4, sticky=tk.W, padx=(0, 5), pady=8)
+        ToolTip(cs_calc_btn, "Рассчитать Cs из FDS файла (требуется ID процесса)")
+
         # Поле порогового значения
         ttk.Label(param_grid, text="Предельное значение:").grid(row=1, column=0, sticky=tk.W, padx=5, pady=8)
         self.threshold_entry = ttk.Entry(param_grid, width=15)
@@ -284,7 +290,159 @@ class MultiInputWindow(tk.Tk):
         
         # Устанавливаем фокус на первое поле ввода
         self.H_entry.focus_set()
-        
+
+        # Automatically attempt to calculate Cs from FDS ini on startup
+        self.get_cs_from_fds_ini()
+    
+    def get_cs_from_fds_ini(self):
+        """Reads FDS path from ini based on ProcessID, calculates min Cs, and updates the Cs_entry field."""
+        global ProcessID # Access the global ProcessID variable
+
+        if ProcessID is None:
+            messagebox.showerror("Ошибка", "ID процесса не найден. Невозможно определить путь к FDS файлу в .ini.")
+            self.update_progress_label("Ошибка: ID процесса не найден")
+            self.update_detail_label("Запустите скрипт с ID процесса в качестве аргумента командной строки")
+            return
+
+        try:
+            # Construct the ini file path
+            current_directory = os.path.dirname(__file__)
+            parent_directory = os.path.abspath(os.path.join(current_directory, os.pardir))
+            inis_path = os.path.join(parent_directory, 'inis')
+            ini_file_path = os.path.join(inis_path, f'filePath_{ProcessID}.ini')
+
+            if not os.path.exists(ini_file_path):
+                messagebox.showerror("Ошибка", f"Файл .ini не найден: {ini_file_path}")
+                self.update_progress_label("Ошибка: .ini файл не найден")
+                self.update_detail_label(f"Проверьте наличие файла {os.path.basename(ini_file_path)} в папке 'inis'")
+                return
+
+            # Read the ini file
+            config = configparser.ConfigParser()
+            config.read(ini_file_path, encoding='utf-16') # Assume utf-16 like in Refine
+
+            if 'filePath' in config and 'filePath' in config['filePath']:
+                fds_path = config['filePath']['filePath']
+            else:
+                messagebox.showerror("Ошибка", f"Не удалось найти ключ 'filePath' в секции '[filePath]' файла {os.path.basename(ini_file_path)}")
+                self.update_progress_label("Ошибка: Не найден путь в .ini")
+                self.update_detail_label(f"Проверьте структуру файла {os.path.basename(ini_file_path)}")
+                return
+
+            if not fds_path or not os.path.exists(fds_path):
+                    messagebox.showerror("Ошибка", f"FDS файл не найден по пути из .ini: {fds_path}")
+                    self.update_progress_label("Ошибка: FDS файл не найден")
+                    self.update_detail_label(f"Путь из .ini: {fds_path}")
+                    return
+
+            # Calculate Cs using the existing method
+            self.update_progress_label(f"Расчет Cs из файла: {os.path.basename(fds_path)}...")
+            self.update_detail_label("Анализ строк MESH...")
+            self.update_idletasks()
+
+            min_cs = self.calculate_cs_from_fds(fds_path)
+
+            if min_cs is not None:
+                self.Cs_entry.delete(0, tk.END)
+                self.Cs_entry.insert(0, f"{min_cs:.6f}") # Format to 6 decimal places
+                self.update_progress_label(f"Cs рассчитан: {min_cs:.6f} м")
+                self.update_detail_label(f"Минимальный размер ячейки из файла '{os.path.basename(fds_path)}' (ID: {ProcessID})")
+            else:
+                # Error message likely shown by calculate_cs_from_fds
+                self.update_progress_label("Ошибка расчета Cs")
+                self.update_detail_label("Не удалось рассчитать Cs из FDS файла, указанного в .ini")
+
+        except configparser.Error as e:
+            messagebox.showerror("Ошибка чтения .ini", f"Ошибка при чтении файла {os.path.basename(ini_file_path)}: {str(e)}")
+            self.update_progress_label("Ошибка чтения .ini")
+            self.update_detail_label(f"Проверьте формат файла: {str(e)}")
+        except Exception as e:
+            messagebox.showerror("Ошибка", f"Произошла непредвиденная ошибка при расчете Cs из .ini: {str(e)}")
+            self.update_progress_label("Непредвиденная ошибка")
+            self.update_detail_label(f"Ошибка: {str(e)}")
+    
+    def calculate_cs(self, xmin, xmax, i):
+        """Вспомогательная функция для расчета размера ячейки по одной оси."""
+        if i == 0: return float('inf') # Избегаем деления на ноль
+        return (xmax - xmin) / i
+
+    def calculate_cs_from_fds(self, file_path):
+        """Читает FDS файл, парсит MESH и возвращает минимальный размер ячейки Cs."""
+        min_cs = float('inf')
+        meshes_found = 0
+        try:
+            with open(file_path, 'r', encoding='utf-8') as file: # Используем utf-8 для большей совместимости
+                for line in file:
+                    # Используем более надежный regex для парсинга MESH
+                    match = re.search(r'&MESH\s+.*?IJK\s*=\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*.*?XB\s*=\s*([-\d\.]+)\s*,\s*([-\d\.]+)\s*,\s*([-\d\.]+)\s*,\s*([-\d\.]+)\s*,\s*([-\d\.]+)\s*,\s*([-\d\.]+)', line, re.IGNORECASE)
+                    if match:
+                        meshes_found += 1
+                        try:
+                            I, J, K = map(int, match.group(1, 2, 3))
+                            Xmin, Xmax, Ymin, Ymax, Zmin, Zmax = map(float, match.group(4, 5, 6, 7, 8, 9))
+                            
+                            cs_x = self.calculate_cs(Xmin, Xmax, I)
+                            cs_y = self.calculate_cs(Ymin, Ymax, J)
+                            cs_z = self.calculate_cs(Zmin, Zmax, K)
+                            
+                            current_min_cs = min(cs_x, cs_y, cs_z)
+                            if current_min_cs < min_cs:
+                                min_cs = current_min_cs
+                        except ValueError:
+                            # Пропускаем строку, если не удалось преобразовать числа
+                            print(f"Предупреждение: Не удалось распарсить числа в строке MESH: {line.strip()}")
+                            continue 
+                            
+            if meshes_found == 0:
+                messagebox.showwarning("Не найдено", f"В файле '{os.path.basename(file_path)}' не найдено строк MESH.")
+                return None
+                
+            if min_cs == float('inf'):
+                messagebox.showerror("Ошибка расчета", "Не удалось рассчитать Cs. Возможно, неверный формат MESH.")
+                return None
+            
+            return min_cs
+            
+        except FileNotFoundError:
+            messagebox.showerror("Ошибка", f"Файл не найден: {file_path}")
+            return None
+        except Exception as e:
+            messagebox.showerror("Ошибка чтения FDS", f"Произошла ошибка при чтении файла '{os.path.basename(file_path)}': {str(e)}")
+            return None
+
+    def select_fds_for_cs(self):
+        """Открывает диалог выбора FDS файла и обновляет поле Cs."""
+        try:
+            filetypes = [("FDS файлы", "*.fds"), ("Все файлы", "*.*")]
+            fds_path = filedialog.askopenfilename(
+                filetypes=filetypes,
+                title="Выберите FDS файл для расчета Cs"
+            )
+            
+            if not fds_path:
+                return # Пользователь отменил выбор
+                
+            self.update_progress_label(f"Расчет Cs из файла: {os.path.basename(fds_path)}...")
+            self.update_detail_label("Анализ строк MESH...")
+            self.update_idletasks()
+            
+            min_cs = self.calculate_cs_from_fds(fds_path)
+            
+            if min_cs is not None:
+                self.Cs_entry.delete(0, tk.END)
+                self.Cs_entry.insert(0, f"{min_cs:.6f}") # Форматируем до 6 знаков
+                self.update_progress_label(f"Cs рассчитан: {min_cs:.6f} м")
+                self.update_detail_label(f"Минимальный размер ячейки из файла '{os.path.basename(fds_path)}'")
+            else:
+                # Сообщение об ошибке уже показано в calculate_cs_from_fds
+                self.update_progress_label("Ошибка расчета Cs")
+                self.update_detail_label("Не удалось рассчитать Cs из выбранного файла")
+
+        except Exception as e:
+            messagebox.showerror("Ошибка", f"Произошла ошибка при выборе FDS файла: {str(e)}")
+            self.update_progress_label("Ошибка")
+            self.update_detail_label(f"Ошибка при обработке FDS файла: {str(e)}")
+
     def try_submit(self, event=None):
         """Пытается запустить расчет если кнопка активна"""
         if self.calculate_btn['state'] == 'normal':
@@ -1970,6 +2128,14 @@ current_directory = os.path.dirname(__file__)
 parent_directory = os.path.abspath(os.path.join(current_directory, os.pardir))
 inis_path = os.path.join(parent_directory, 'inis')
 
+# Determine ProcessID from command line argument
+if len(sys.argv) > 1:
+    ProcessID = int(sys.argv[1])
+    print(f"Process ID received: {ProcessID}")
+else:
+    print("No Process ID received.")
+
+# Define paths for ini files
 iniHZ_path = os.path.join(inis_path, 'IniHZ.ini')
 InideltaZ_path = os.path.join(inis_path, 'InideltaZ.ini')
 IniSetpoint_path = os.path.join(inis_path, 'IniSetpoint.ini')
@@ -2017,6 +2183,7 @@ if os.path.isfile(IniFpom_path):
     except Exception as e:
         print(f"Error reading Fpom value from {IniFpom_path}: {e}")
 
+print(f"Debug: ProcessID before creating MultiInputWindow: {ProcessID}") # Debug print
 # Обработка начальной загрузки
 input_window = MultiInputWindow(H=value_IniHZ, Cs=value_InideltaZ, threshold=value_IniSetpoint, Fpom=value_IniFpom, quantity=value_IniQuantity)
 input_window.mainloop()
