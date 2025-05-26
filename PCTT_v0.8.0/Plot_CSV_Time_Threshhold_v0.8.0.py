@@ -122,7 +122,7 @@ class MultiInputWindow(tk.Tk):
                       background=[("active", self.colors["secondary"]), 
                                   ("disabled", self.colors["border"])])
         
-        self.style.configure("Header.TLabel", font=("Segoe UI", 14, "bold"), foreground=self.colors["primary"])
+        self.style.configure("Header.TLabel", font=("Segoe UI", 14, "bold"), foreground=self.colors["primary"], anchor=tk.CENTER)
         self.style.configure("Title.TLabel", font=("Segoe UI", 12, "bold"), foreground=self.colors["text_dark"])
         
         # Стиль для LabelFrame
