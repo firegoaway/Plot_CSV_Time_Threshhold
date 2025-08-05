@@ -98,7 +98,7 @@ class MultiInputWindow(tk.Tk):
         
         self.quantity = quantity or value_IniQuantity
         self.H = H
-        self.Cs = Cs # Store the initial Cs value (might be None)
+        self.Cs = Cs # Храним Cs из ini
         self.file_path = None
         self.threshold = threshold
         self.Fpom = Fpom
@@ -291,12 +291,12 @@ class MultiInputWindow(tk.Tk):
         # Устанавливаем фокус на первое поле ввода
         self.H_entry.focus_set()
 
-        # Automatically attempt to calculate Cs from FDS ini on startup
+        # Автоматическое заполнение Cs из FDS
         self.get_cs_from_fds_ini()
     
     def get_cs_from_fds_ini(self):
         """Reads FDS path from ini based on ProcessID, calculates min Cs, and updates the Cs_entry field."""
-        global ProcessID # Access the global ProcessID variable
+        global ProcessID # Установка глобальной переменной ProcessID
 
         if ProcessID is None:
             messagebox.showerror("Ошибка", "ID процесса не найден. Невозможно определить путь к FDS файлу в .ini.")
@@ -305,7 +305,7 @@ class MultiInputWindow(tk.Tk):
             return
 
         try:
-            # Construct the ini file path
+            # Установка пути к ini
             current_directory = os.path.dirname(__file__)
             parent_directory = os.path.abspath(os.path.join(current_directory, os.pardir))
             inis_path = os.path.join(parent_directory, 'inis')
@@ -317,9 +317,9 @@ class MultiInputWindow(tk.Tk):
                 self.update_detail_label(f"Проверьте наличие файла {os.path.basename(ini_file_path)} в папке 'inis'")
                 return
 
-            # Read the ini file
+            # Читаем ini
             config = configparser.ConfigParser()
-            config.read(ini_file_path, encoding='utf-16') # Assume utf-16 like in Refine
+            config.read(ini_file_path, encoding='utf-16') # Принимаем UTF-16 как кодировку по умолчанию
 
             if 'filePath' in config and 'filePath' in config['filePath']:
                 fds_path = config['filePath']['filePath']
@@ -335,7 +335,7 @@ class MultiInputWindow(tk.Tk):
                     self.update_detail_label(f"Путь из .ini: {fds_path}")
                     return
 
-            # Calculate Cs using the existing method
+            # Расчитаем Cs
             self.update_progress_label(f"Расчет Cs из файла: {os.path.basename(fds_path)}...")
             self.update_detail_label("Анализ строк MESH...")
             self.update_idletasks()
@@ -344,11 +344,11 @@ class MultiInputWindow(tk.Tk):
 
             if min_cs is not None:
                 self.Cs_entry.delete(0, tk.END)
-                self.Cs_entry.insert(0, f"{min_cs:.6f}") # Format to 6 decimal places
+                self.Cs_entry.insert(0, f"{min_cs:.6f}") # Форматируем до 6 знаков после запятой
                 self.update_progress_label(f"Cs рассчитан: {min_cs:.6f} м")
                 self.update_detail_label(f"Минимальный размер ячейки из файла '{os.path.basename(fds_path)}' (ID: {ProcessID})")
             else:
-                # Error message likely shown by calculate_cs_from_fds
+                # Выводим предупреждение, если не удалось рассчитать Cs
                 self.update_progress_label("Ошибка расчета Cs")
                 self.update_detail_label("Не удалось рассчитать Cs из FDS файла, указанного в .ini")
 
@@ -481,7 +481,7 @@ class MultiInputWindow(tk.Tk):
             )
             
             if not self.file_path:
-                # User canceled file selection
+                # Пользователь отменил выбор файла
                 self.update_progress_label("Выбор файла отменен")
                 self.update_detail_label("Пожалуйста, выберите CSV файл для обработки")
                 return
@@ -497,14 +497,14 @@ class MultiInputWindow(tk.Tk):
                 font=("Segoe UI", 9, "bold")
             )
                 
-            # Check if file exists and is readable
+            # Проверка существования и читаемости файла
             if not os.path.exists(self.file_path):
                 messagebox.showerror("Ошибка", "Выбранный файл не существует")
                 self.file_path_label.config(text="", foreground=self.colors["text_dark"])
                 self.file_path = None
                 return
                 
-            # Check if file is too large
+            # Проверка размера файла
             file_size_mb = os.path.getsize(self.file_path) / (1024 * 1024)
             
             # Показываем информацию о файле
@@ -512,7 +512,7 @@ class MultiInputWindow(tk.Tk):
             self.update_detail_label(f"Размер файла: {file_size_mb:.1f} МБ")
             
             # Запрос подтверждения для больших файлов
-            if file_size_mb > 100:  # If file is larger than 100MB
+            if file_size_mb > 100:  # Файл больше 100 МБ
                 self.update_detail_label(f"Большой файл ({file_size_mb:.1f} МБ) - запрос подтверждения...")
                 if not messagebox.askyesno("Предупреждение", 
                                           f"Выбранный файл имеет размер {file_size_mb:.1f} МБ. "
@@ -606,7 +606,7 @@ class MultiInputWindow(tk.Tk):
     
     def remove_zero_only_columns(self, input_file_path, output_file_path):
         try:
-            # First check if file exists and is readable
+            # Проверяем существование и читаемость файла
             if not os.path.exists(input_file_path):
                 self.update_progress_label("Ошибка: Файл не найден")
                 self.processing_in_progress = False
@@ -620,7 +620,7 @@ class MultiInputWindow(tk.Tk):
                 except Exception as e:
                     self.update_detail_label(f"Не удалось удалить существующий файл: {str(e)}")
             
-            # Check file size first to avoid processing extremely large files
+            # Сначала проверяем размер файла, чтобы случайно не обработать слишком большой файл
             file_size_mb = os.path.getsize(input_file_path) / (1024 * 1024)
             self.update_progress_label(f"Анализ файла размером {file_size_mb:.2f} МБ")
             self.update_detail_label("Определение стратегии обработки...")
