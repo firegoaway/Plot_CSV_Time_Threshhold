@@ -89,7 +89,7 @@ class MultiInputWindow(tk.Tk):
         parent_directory = os.path.abspath(os.path.join(current_directory, os.pardir))
         icon_path = os.path.join(parent_directory, '.gitpics', 'pctt.ico')
 
-        self.title("PCTT v0.8.0")
+        self.title("PCTT v0.9.0")
         self.iconbitmap(icon_path)
         self.wm_iconbitmap(icon_path)
         self.geometry("600x780")
@@ -264,7 +264,7 @@ class MultiInputWindow(tk.Tk):
         self.info_label.pack(side=tk.LEFT)
         
         # Добавляем версию в правый угол статусной строки
-        version_label = ttk.Label(status_frame, text="v0.8.0", 
+        version_label = ttk.Label(status_frame, text="v0.9.0", 
                                  font=("Segoe UI", 9, "italic"), 
                                  foreground=self.colors["text_dark"])
         version_label.pack(side=tk.RIGHT)
@@ -2020,7 +2020,7 @@ def custom_message_box(callback_open_png, callback_open_folder, callback_close):
         top.destroy()
 
     top = Toplevel()
-    top.title("PCTT v0.8.0")
+    top.title("PCTT v0.9.0")
     top.geometry("500x260")
     
     current_directory = os.path.dirname(__file__)
