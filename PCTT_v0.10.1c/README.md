@@ -202,7 +202,7 @@ elif quantity == "OPTICAL DENSITY":
     setpoint = 0.023
     trip_direction = 1
 elif quantity == "TEMPERATURE":
-    setpoint = 58
+    setpoint = 68
     trip_direction = 1
 ```
 

@@ -519,7 +519,7 @@ class InsertDEVCApp(QMainWindow):
             setpoint = 0.023
             trip_direction = 1
         elif quantity == "TEMPERATURE":
-            setpoint = 58
+            setpoint = 68
             trip_direction = 1
         
         # Сохранение порога срабатывания в INI файл
