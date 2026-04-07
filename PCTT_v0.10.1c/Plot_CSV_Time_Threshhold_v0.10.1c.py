@@ -3,6 +3,28 @@ import csv
 import configparser
 import re
 import sys
+import logging
+
+# ============================================================================
+# НАСТРОЙКИ ОТЛАДКИ
+# ============================================================================
+DEBUG_LOGGING = False  # True = записывать лог в PCTT_debug.log, False = отключить логирование
+
+# Настройка логирования для отладки
+if DEBUG_LOGGING:
+    logging.basicConfig(
+        level=logging.DEBUG,
+        filename='PCTT_debug.log',
+        filemode='w',
+        format='%(asctime)s - %(levelname)s - %(message)s'
+    )
+else:
+    # Отключаем логирование
+    logging.basicConfig(
+        level=logging.CRITICAL,
+        format='%(asctime)s - %(levelname)s - %(message)s'
+    )
+# ============================================================================
 
 # Функторы
 import dask.dataframe as dd
@@ -89,7 +111,7 @@ class MultiInputWindow(tk.Tk):
         parent_directory = os.path.abspath(os.path.join(current_directory, os.pardir))
         icon_path = os.path.join(parent_directory, '.gitpics', 'pctt.ico')
 
-        self.title("PCTT v0.9.0")
+        self.title("PCTT v0.10.1c")
         self.iconbitmap(icon_path)
         self.wm_iconbitmap(icon_path)
         self.geometry("600x780")
@@ -264,7 +286,7 @@ class MultiInputWindow(tk.Tk):
         self.info_label.pack(side=tk.LEFT)
         
         # Добавляем версию в правый угол статусной строки
-        version_label = ttk.Label(status_frame, text="v0.9.0", 
+        version_label = ttk.Label(status_frame, text="v0.10.1c", 
                                  font=("Segoe UI", 9, "italic"), 
                                  foreground=self.colors["text_dark"])
         version_label.pack(side=tk.RIGHT)
@@ -1544,6 +1566,14 @@ class MultiInputWindow(tk.Tk):
 
     def process_csv(self):
         try:
+            # Логирование входных параметров
+            logging.debug("=" * 50)
+            logging.debug("Начало process_csv")
+            logging.debug(f"file_path: {self.file_path}")
+            logging.debug(f"quantity: {self.quantity}")
+            logging.debug(f"threshold: {self.threshold}")
+            logging.debug(f"H: {self.H}, Cs: {self.Cs}, Fpom: {self.Fpom}")
+            
             input_file_path = self.file_path
             input_H = float(self.H)
             input_Cs = float(self.Cs)
@@ -1551,11 +1581,11 @@ class MultiInputWindow(tk.Tk):
             input_Fpom = self.Fpom
 
             start_time = time.time()  # Начало отсчета времени
-            
+
             # Calculate parameters
             self.update_progress_label("Расчет параметров...")
             self.update_progress(5, 100)
-            
+
             R = None
             if input_H <= 3.5:
                 R = 6.4
@@ -1571,11 +1601,16 @@ class MultiInputWindow(tk.Tk):
             self.update_detail_label(detail_info)
             self.update_progress(10, 100)
 
+            # Инициализируем L
+            L = None
+
             if input_Fpom and input_Fpom != 0:
                 input_Fpom = float(input_Fpom)
                 F = input_Fpom
                 detail_info = f'F (используем значение Fпом = {input_Fpom} из GUI) = {F}'
                 self.update_detail_label(detail_info)
+                # Рассчитываем L для случая, когда F задано
+                L = math.sqrt(F / math.pi) * 2
             else:
                 L = R * math.sqrt(2)
                 detail_info = f'L = {L:.2f} м'
@@ -1613,16 +1648,34 @@ class MultiInputWindow(tk.Tk):
                 
                 with open(input_file_path, 'r') as infile:
                     reader = csv.reader(infile)
-                    
+
                     next(reader)  # Пропускаем первую строку
                     headers = next(reader)
+                    original_headers = headers[:]  # Сохраняем оригинальные заголовки
                     headers = [header.replace('"', '').replace(' ', '') for header in headers]
                     
-                    # Фильтруем заголовки
-                    valid_columns = [i for i, header in enumerate(headers) if re.match(r'DEVC_X\d+Y\d+_MESH_\d+', header) or header == 'Time']
+                    # Отладка: выводим первые несколько заголовков для проверки формата
+                    logging.debug(f"Первые 5 заголовков CSV: {headers[:5]}")
+                    logging.debug(f"self.quantity = '{self.quantity}'")
+
+                    # Определяем паттерн для фильтрации колонок по типу параметра
+                    # FDS экспортирует колонки в формате: DEVC_X*Y*_MESH_*
+                    # Тип параметра определяется через self.quantity, а не по имени колонки
+                    # Все колонки DEVC_X*Y*_MESH_* относятся к текущему типу параметра
+                    parameter_pattern = r'DEVC_X\d+Y\d+_MESH_\d+'
+
+                    # Фильтруем заголовки - выбираем только колонки нужного типа параметра + Time
+                    valid_columns = [i for i, header in enumerate(headers) if re.match(parameter_pattern, header) or header == 'Time']
                     
+                    # Отладка: выводим информацию о найденных колонках
+                    vis_column_names = [headers[i] for i in valid_columns if headers[i] != 'Time']
+                    logging.debug(f"Найдено VISIBILITY колонок: {len(vis_column_names)}")
+                    logging.debug(f"Имена колонок: {vis_column_names[:10]}")
+                    logging.debug(f"parameter_pattern = '{parameter_pattern}'")
+
                     # Обновляем интерфейс с подробной информацией о ходе обработки
-                    detail_info = f"Параметры: R={R}, F={F}, Cc={Cc} | Найдено {len(valid_columns)} релевантных колонок из {len(headers)}"
+                    L = math.sqrt((4 * F) / math.pi)
+                    detail_info = f"Параметры: L={L:.3f}, R={R}, F={F}, Cc={Cc} | Найдено {len(valid_columns)} релевантных колонок из {len(headers)}"
                     self.update_detail_label(detail_info)
                     self.update_progress(25, 100)
 
@@ -1632,182 +1685,249 @@ class MultiInputWindow(tk.Tk):
 
                     # Обрабатываем строки и сохраняем отфильтрованные данные
                     filtered_data = []
-                    
+
                     # Если выходной файл существует, удаляем его
                     if os.path.exists(output_file_path):
                         try:
                             os.remove(output_file_path)
                         except Exception as e:
                             self.update_detail_label(f"{detail_info} | Не удалось удалить существующий файл: {str(e)}")
-                    
+
                     # Оптимизация для больших файлов
                     batch_size = 2000  # Увеличиваем размер пакета для большей производительности
-                    batch_rows = []
-                    
+                    batch_rows_filtered = []  # Для внутренней обработки (отфильтрованные данные)
+                    batch_rows_original = []  # Для записи в выходной файл (оригинальные данные)
+
                     # Определяем частоту обновления интерфейса
                     update_frequency = max(500, total_rows // 50)  # Обновляем UI максимум 50 раз за весь процесс
-                    
+
                     # Оптимизированная обработка с минимумом обновлений UI
                     start_batch_time = time.time()
                     last_update_time = start_time
                     rows_since_last_update = 0
-                    
+
+                    # Записываем заголовки в выходной файл
+                    with open(output_file_path, 'w', newline='') as outfile:
+                        writer = csv.writer(outfile)
+                        writer.writerow(original_headers)
+
                     for i, row in enumerate(reader):
-                        # Process row
-                        filtered_row = [convert_scientific_to_float(row[i]) for i in valid_columns]
+                        # Process row - сохраняем отфильтрованные данные для внутренней обработки
+                        filtered_row = [convert_scientific_to_float(row[col_idx]) for col_idx in valid_columns]
                         filtered_data.append(filtered_row)
-                        batch_rows.append(filtered_row)
-                        rows_since_last_update += 1
+                        batch_rows_filtered.append(filtered_row)
                         
+                        # Сохраняем оригинальные данные для записи в выходной файл
+                        original_row = [convert_scientific_to_float(val) for val in row]
+                        batch_rows_original.append(original_row)
+                        rows_since_last_update += 1
+
                         # Write batches to reduce disk operations
-                        if len(batch_rows) >= batch_size:
+                        if len(batch_rows_original) >= batch_size:
                             with open(output_file_path, 'a', newline='') as outfile:
                                 writer = csv.writer(outfile)
-                                writer.writerows(batch_rows)
-                            
+                                writer.writerows(batch_rows_original)
+
                             # Measure batch processing time
                             batch_time = time.time() - start_batch_time
                             rows_per_second_batch = batch_size / batch_time if batch_time > 0 else 0
-                            
+
                             # Reset batch
-                            batch_rows = []
+                            batch_rows_filtered = []
+                            batch_rows_original = []
                             start_batch_time = time.time()
-                        
+
                         # Update UI only occasionally or after significant time has passed
                         current_time = time.time()
                         time_since_update = current_time - last_update_time
-                        
+
                         if (i % update_frequency == 0 or time_since_update > 2.0) and rows_since_last_update > 0:  # Update every 2 seconds at most
                             elapsed_time = current_time - start_time
                             if elapsed_time > 0:
                                 rows_per_second = i / elapsed_time
                                 estimated_total_time = total_rows / rows_per_second if rows_per_second > 0 else 0
                                 remaining_time = estimated_total_time - elapsed_time if estimated_total_time > 0 else 0
-                                
+
                                 # More efficient progress calculation
                                 progress_pct = min(99, (i / total_rows) * 100)
-                                
+
                                 # Update UI with comprehensive information
+                                L = math.sqrt((4 * F) / math.pi)
                                 processing_info = (
-                                    f"Параметры: R={R}, F={F}, Cc={Cc} | "
+                                    f"Параметры: L={L:.3f}, R={R}, F={F}, Cc={Cc} | "
                                     f"Обработано {i:,}/{total_rows:,} строк ({progress_pct:.1f}%) | "
                                     f"Скорость: {rows_per_second:.1f} строк/сек | "
                                     f"Осталось: ~{remaining_time/60:.1f} мин"
                                 )
                                 self.update_detail_label(processing_info)
                                 self.update_progress(i, total_rows)
-                                
+
                                 # Reset counters
                                 last_update_time = current_time
                                 rows_since_last_update = 0
-                    
-                    # Записываем оставшиеся строки
-                    if batch_rows:
+
+                    # Записываем оставшиеся строки в выходной файл
+                    if batch_rows_original:
                         with open(output_file_path, 'a', newline='') as outfile:
                             writer = csv.writer(outfile)
-                            writer.writerows(batch_rows)
+                            writer.writerows(batch_rows_original)
                     
                     self.update_progress_label("Анализ данных для определения критического времени...")
-                    
-                    # Находим индекс времени
-                    time_index = headers.index('Time')
-                    if time_index >= len(valid_columns):
-                        time_index = 0  # Если индекс за пределами, берем первую колонку
-                    else:
-                        time_index = valid_columns.index(time_index)
-                    
+
+                    # Находим индекс времени в отфильтрованных данных
+                    # Time всегда должен быть в valid_columns, так как мы добавляем его в паттерн
+                    time_original_index = headers.index('Time') if 'Time' in headers else 0
+                    # Находим позицию Time в отфильтрованном наборе valid_columns
+                    time_index = valid_columns.index(time_original_index) if time_original_index in valid_columns else 0
+
                     critical_time = None
                     deff_values = []
                     
                     self.update_progress(0, len(filtered_data))
-                    self.update_detail_label(f"Параметры: R={R}, F={F}, Cc={Cc} | Вычисление dэфф и поиск критического времени...")
+                    self.update_detail_label(f"Параметры: L={L:.3f}, R={R}, F={F}, Cc={Cc} | Вычисление dэфф и поиск критического времени...")
                     
                     # Проход по отфильтрованным данным для поиска критического времени
                     total_filtered_rows = len(filtered_data)
                     update_frequency = max(100, total_filtered_rows // 50)  # Update UI ~50 times total
 
-                    self.update_detail_label(f"Параметры: R={R}, F={F}, Cc={Cc} | Анализ {total_filtered_rows} строк данных...")
+                    self.update_detail_label(f"Параметры: L={L:.3f}, R={R}, F={F}, Cc={Cc} | Анализ {total_filtered_rows} строк данных...")
 
                     # Initialize max_deff to track maximum value
                     max_deff = 0
+                    
+                    # Отладочная информация - выводим первые несколько строк для проверки
+                    debug_count = min(5, len(filtered_data))
+                    if debug_count > 0:
+                        sample_row = filtered_data[0]
+                        vis_values = [val for j, val in enumerate(sample_row) if j != time_index and isinstance(val, float)]
+                        logging.debug(f"Пример строки: {len(sample_row)} колонок, time_index={time_index}")
+                        logging.debug(f"VISIBILITY значения в первой строке: {vis_values[:10]}")
+                        logging.debug(f"input_threshold = {input_threshold}, Cc = {Cc}, L = {L:.2f}")
+                        # Подсчитаем count для первой строки
+                        sample_count = sum(1 for j, val in enumerate(sample_row) if j != time_index and isinstance(val, float) and val <= input_threshold)
+                        logging.debug(f"count для первой строки (VISIBILITY <= {input_threshold}): {sample_count}")
+
+                    # Проход по всем строкам для сбора deff_values и поиска критического времени
+                    # Критическое время — первая строка, где count >= Cc
+                    # deff_values должен быть заполнен для ВСЕХ строк для корректного графика
+                    
                     for i, row in enumerate(filtered_data):
                         # Minimize UI updates for better performance
                         if i % update_frequency == 0:
                             progress_pct = i * 100.0 / total_filtered_rows
                             self.update_progress(i, total_filtered_rows)
-                            self.update_detail_label(f"Параметры: R={R}, F={F}, Cc={Cc} | Поиск критического времени: {progress_pct:.1f}%")
+                            self.update_detail_label(f"Параметры: L={L:.3f}, R={R}, F={F}, Cc={Cc} | Поиск критического времени: {progress_pct:.1f}%")
 
                         # Optimize count calculation - this is a performance-critical inner loop
-                        # Подсчет точек, достигших порогового значения
+                        # Подсчет точек, достигших порогового значения (ИСКЛЮЧАЯ Time колонку)
                         if (self.quantity == "VISIBILITY"):
-                            count = sum(1 for val in row if isinstance(val, float) and val <= input_threshold)
+                            count = sum(1 for j, val in enumerate(row) if j != time_index and isinstance(val, float) and val <= input_threshold)
                         else:
-                            count = sum(1 for val in row if isinstance(val, float) and val >= input_threshold)
-                        
-                        # Проверка достижения критического значения
-                        if count >= Cc:
+                            count = sum(1 for j, val in enumerate(row) if j != time_index and isinstance(val, float) and val >= input_threshold)
+
+                        # Отладка: первые 10 итераций
+                        if i < 10:
+                            logging.debug(f"Строка {i}: count={count}, Cc={Cc}, time={row[time_index] if len(row) > time_index else 'N/A'}")
+
+                        # Вычисление dэфф для ВСЕХ строк (для графика)
+                        deff = math.sqrt((4 * (count * input_Cs)) / math.pi)
+                        deff_values.append(deff)
+
+                        # Track maximum deff value
+                        if deff > max_deff:
+                            max_deff = deff
+
+                        # Поиск критического времени (первая строка, где count >= Cc)
+                        if critical_time is None and count >= Cc:
                             critical_time = row[time_index]
-                            self.update_detail_label(f"Параметры: R={R}, F={F}, Cc={Cc} | Критическое время найдено: {critical_time} сек")
-                            break
+                            logging.debug(f"Критическое время найдено на строке {i}: critical_time={critical_time}, count={count}")
+                            self.update_detail_label(f"Параметры: L={L:.3f}, R={R}, F={F}, Cc={Cc} | Критическое время найдено: {critical_time} сек")
+                            # НЕ прерываем цикл — продолжаем собирать deff_values для графика
+
+                        # Существенно реже обновляем информацию — только для значимых изменений
+                        if i % (update_frequency * 5) == 0 and i > 0:
+                            self.update_detail_label(f"Параметры: L={L:.3f}, R={R}, F={F}, Cc={Cc} | dэфф: {deff:.2f} м, макс: {max_deff:.2f} м, порог: {L:.2f} м")
+
+                    # Отладочная информация после завершения поиска
+                    logging.debug(f"deff_values: {len(deff_values)} элементов, max_deff={max_deff:.4f}")
+                    if deff_values:
+                        logging.debug(f"deff_values первые 10: {deff_values[:10]}")
+                        logging.debug(f"deff_values последние 10: {deff_values[-10:]}")
+                    
+                    if critical_time is None:
+                        # Найдем минимальное и максимальное значения VISIBILITY для отладки
+                        all_vis_values = []
+                        for row in filtered_data:
+                            for j, val in enumerate(row):
+                                if j != time_index and isinstance(val, float):
+                                    all_vis_values.append(val)
+                        
+                        if all_vis_values:
+                            min_vis = min(all_vis_values)
+                            max_vis = max(all_vis_values)
+                            below_threshold = sum(1 for v in all_vis_values if v <= input_threshold)
+                            self.update_detail_label(
+                                f"Параметры: L={L:.3f}, R={R}, F={F}, Cc={Cc} | "
+                                f"Отладка: VISIBILITY min={min_vis:.2f}, max={max_vis:.2f}, "
+                                f"ниже порога ({input_threshold}): {below_threshold} значений, "
+                                f"требуется Cc={Cc} одновременных достижений"
+                            )
                         else:
-                            # Вычисление dэфф - только считаем, но обновляем GUI редко
-                            deff = math.sqrt((4 * (count * input_Cs)) / math.pi)
-                            L = deff
-                            deff_values.append(deff)
-                            
-                            # Track maximum deff value
-                            if deff > max_deff:
-                                max_deff = deff
-                                
-                            # Существенно реже обновляем информацию - только для значимых изменений
-                            if i % (update_frequency * 5) == 0 and i > 0:
-                                self.update_detail_label(f"Параметры: R={R}, F={F}, Cc={Cc} | dэфф: {deff:.2f} м, макс: {max_deff:.2f} м, порог: {L:.2f} м")
+                            self.update_detail_label(f"Параметры: L={L:.3f}, R={R}, F={F}, Cc={Cc} | Отладка: Не найдено float значений VISIBILITY")
                     
                     self.update_progress_label("Подготовка данных для графика...")
                     self.update_progress(60, 100)
-                    
+
                     # Собираем данные для графика
-                    time_values = [row[time_index] for row in filtered_data if len(row) > time_index]
+                    # filtered_data имеет структуру: [row][col], где col 0 = time_index в filtered_data
+                    # Нам нужно найти позицию Time в filtered_data
+                    time_col_position = valid_columns.index(time_original_index) if time_original_index in valid_columns else 0
+                    
+                    # Собираем time_values из первой колонки filtered_data (это Time)
+                    time_values = [row[time_col_position] for row in filtered_data if len(row) > time_col_position]
                     relevant_time_values = time_values[:len(deff_values)]
+                    
+                    # Собираем данные по остальным колонкам (параметры)
                     devc_data = {}
-                    
-                    self.update_detail_label(f"Параметры: R={R}, F={F}, Cc={Cc} | Собираем данные по {len(valid_columns)} колонкам...")
-                    
-                    for j, index in enumerate(valid_columns):
-                        if index < len(headers):
-                            # Drastically reduce UI updates for large column sets
-                            update_frequency = max(1000, len(valid_columns) // 100)  # Update only ~100 times during the entire process
+
+                    self.update_detail_label(f"Параметры: L={L:.3f}, R={R}, F={F}, Cc={Cc} | Собираем данные по {len(valid_columns)} колонкам...")
+
+                    # Проходим по всем колонкам в valid_columns, кроме Time
+                    for j, col_position in enumerate(valid_columns):
+                        # Пропускаем колонку Time
+                        if j == time_col_position:
+                            continue
                             
-                            # Only update progress in larger chunks
-                            if j % update_frequency == 0 or j == len(valid_columns) - 1:
-                                # Calculate progress percentage
-                                progress_value = 60 + int(20 * j / len(valid_columns))
-                                self.update_progress(progress_value, 100)
-                                
-                                # Show processing status with completion percentage
-                                column_percent = (j / len(valid_columns)) * 100
-                                self.update_detail_label(
-                                    f"Параметры: R={R}, F={F}, Cc={Cc} | "
-                                    f"Обработка колонок: {column_percent:.1f}% ({j}/{len(valid_columns)})"
-                                )
-                            
-                            # Process column data without UI updates
-                            devc_data[headers[index]] = [row[j] for row in filtered_data if j < len(row)]
+                        header_name = headers[col_position]
+                        # Берём значения из filtered_data - позиция j соответствует позиции в valid_columns
+                        devc_data[header_name] = [row[j] for row in filtered_data if len(row) > j]
+                        
+                        # Отладка: проверим длины
+                        if len(devc_data[header_name]) != len(time_values):
+                            logging.warning(f"Длины не совпадают для {header_name}: {len(devc_data[header_name])} vs {len(time_values)}")
                     
                     self.update_progress(80, 100)
                     self.update_progress_label("Формирование графика...")
                     
+                    # Отладка: проверяем данные перед построением
+                    logging.debug(f"time_values: {len(time_values)}, deff_values: {len(deff_values)}")
+                    logging.debug(f"relevant_time_values: {len(relevant_time_values)}")
+                    if deff_values:
+                        logging.debug(f"deff_values: min={min(deff_values):.4f}, max={max(deff_values):.4f}, first 5: {deff_values[:5]}")
+                    if time_values:
+                        logging.debug(f"time_values: min={min(time_values):.4f}, max={max(time_values):.4f}, first 5: {time_values[:5]}")
+
                     # Подготавливаем график
                     plt.figure(figsize=(12,4))
-                    
+
                     # Создаём вторую ось Y
                     ax1 = plt.gca()  # Берём текущую ось
                     ax2 = ax1.twinx()  # Создаём твин-копию ax1
-                    
+
                     total_cells = len(devc_data)
                     filled_cells = 0
-                    
-                    self.update_detail_label(f"Параметры: R={R}, F={F}, Cc={Cc} | Начинаем построение графика для {total_cells} наборов данных")
+
+                    self.update_detail_label(f"Параметры: L={L:.3f}, R={R}, F={F}, Cc={Cc} | Начинаем построение графика для {total_cells} наборов данных")
                     
                     # Для первой оси Y рисуем значения devc_data (каждой точки)
                     # Optimize for large datasets by reducing UI updates and plotting in batches
@@ -1816,7 +1936,7 @@ class MultiInputWindow(tk.Tk):
                     # Pre-allocate memory for plot data
                     if total_cells > 1000:
                         # For very large datasets, use downsampling to improve performance
-                        self.update_detail_label(f"Параметры: R={R}, F={F}, Cc={Cc} | Оптимизация построения графика ({total_cells} наборов)")
+                        self.update_detail_label(f"Параметры: L={L:.3f}, R={R}, F={F}, Cc={Cc} | Оптимизация построения графика ({total_cells} наборов)")
                         
                         # Plot time values in batches for better performance
                         batch_counter = 0
@@ -1840,7 +1960,7 @@ class MultiInputWindow(tk.Tk):
                                 progress = 80 + (5 * filled_cells / total_cells)
                                 self.update_progress(progress, 100)
                                 self.update_detail_label(
-                                    f"Параметры: R={R}, F={F}, Cc={Cc} | "
+                                    f"Параметры: L={L:.3f}, R={R}, F={F}, Cc={Cc} | "
                                     f"Построение графика: {(filled_cells/total_cells*100):.1f}% ({filled_cells}/{total_cells})"
                                 )
                     else:
@@ -1857,13 +1977,13 @@ class MultiInputWindow(tk.Tk):
                                 progress = 80 + (5 * filled_cells / total_cells)
                                 self.update_progress(progress, 100)
                                 self.update_detail_label(
-                                    f"Параметры: R={R}, F={F}, Cc={Cc} | "
+                                    f"Параметры: L={L:.3f}, R={R}, F={F}, Cc={Cc} | "
                                     f"Построение графика: {(filled_cells/total_cells*100):.1f}% ({filled_cells}/{total_cells})"
                                 )
                     
                     self.update_progress(85, 100)
                     self.update_progress_label("Добавление кривой dэфф...")
-                    self.update_detail_label(f"Параметры: R={R}, F={F}, Cc={Cc} | Добавление кривой dэфф на график...")
+                    self.update_detail_label(f"Параметры: L={L:.3f}, R={R}, F={F}, Cc={Cc} | Добавление кривой dэфф на график...")
                     
                     # Рисуем значения d_eff на полотне ax2 с собственной осью Y
                     ax2.plot(relevant_time_values, deff_values, color='black', linewidth=5, label='dэфф (м)')
@@ -1872,11 +1992,11 @@ class MultiInputWindow(tk.Tk):
                     self.update_progress_label("Добавление пороговых линий...")
                     
                     if critical_time is not None:
-                        self.update_detail_label(f"Параметры: R={R}, F={F}, Cc={Cc} | Построение критической линии tпор = {critical_time:.2f} сек")
+                        self.update_detail_label(f"Параметры: L={L:.3f}, R={R}, F={F}, Cc={Cc} | Построение критической линии tпор = {critical_time:.2f} сек")
                         ax1.axvline(x=critical_time, color='red', linestyle='--', lw=3, label=f'tпор = {critical_time:.2f} (сек)')
                     else:
                         error_msg = "Критическое время не найдено. Проверьте предельное значение параметра."
-                        self.update_detail_label(f"Параметры: R={R}, F={F}, Cc={Cc} | ОШИБКА: {error_msg}")
+                        self.update_detail_label(f"Параметры: L={L:.3f}, R={R}, F={F}, Cc={Cc} | ОШИБКА: {error_msg}")
                         messagebox.showinfo("Проверка данных", "Проверьте введённые данные. Возможно вы неправильно указали предельное значение параметра, воздействующего на пожарный извещатель.")
                     
                     self.update_progress(90, 100)
@@ -1900,14 +2020,14 @@ class MultiInputWindow(tk.Tk):
                     if critical_time is not None:
                         f1 = critical_time + 60 + 20
                         f2f4 = critical_time + 30 + 20
-                        self.update_detail_label(f"Параметры: R={R}, F={F}, Cc={Cc} | Расчетные значения: F1={f1:.2f} сек, F2-F5={f2f4:.2f} сек")
+                        self.update_detail_label(f"Параметры: L={L:.3f}, R={R}, F={F}, Cc={Cc} | Расчетные значения: F1={f1:.2f} сек, F2-F5={f2f4:.2f} сек")
                     
                     self.update_progress(92, 100)
                     self.update_progress_label("Оформление графика...")
-                    
+
                     # Добавляем горизонтальную линию для L и input_threshold на соответствующих осях
                     ax1.axhline(y=input_threshold, color='blue', linestyle='--', lw=3, label=f'Крит. знач. параметра = {input_threshold:.3f} ({measure_units})', alpha=0.5)
-                    ax2.axhline(y=L, color='green', linestyle='--', lw=3, label=f'dэфф = {max(deff_values):.3f} (м)', alpha=0.5)
+                    ax2.axhline(y=L, color='green', linestyle='--', lw=3, label=f'dэфф = {L:.3f} (м)', alpha=0.5)
                     
                     self.update_progress(94, 100)
                     
@@ -1925,20 +2045,28 @@ class MultiInputWindow(tk.Tk):
                     ax1.legend(lines1 + lines2, labels1 + labels2, loc='center left')
                     
                     self.update_progress(96, 100)
-                    self.update_detail_label(f"Параметры: R={R}, F={F}, Cc={Cc} | Настройка осей графика...")
+                    self.update_detail_label(f"Параметры: L={L:.3f}, R={R}, F={F}, Cc={Cc} | Настройка осей графика...")
 
                     # Настройка осей
                     try:
+                        # Левая ось (ax1) - масштабируется по input_threshold
                         ax1.set_ylim(bottom=0, top=input_threshold * 1.1)
                         if critical_time is not None:
                             ax1.set_xlim(left=0, right=max(critical_time, 0) * 1.1)
-                        
-                        if deff_values:
-                            ax2.set_ylim(bottom=min(deff_values) * 0.9, top=max(deff_values) * 1.1)
+
+                        # Правая ось (ax2) - масштабируется по L (пороговое значение dэфф)
+                        # L — это dэфф в момент достижения критического условия (count = Cc)
+                        # Это обеспечивает правильное наложение зелёной линии на график
+                        if L is not None:
+                            # Для всех параметров масштабируем по L
+                            ax2.set_ylim(bottom=0, top=L * 1.1)
+                            logging.debug(f"ax2 ylim установлено по L: bottom=0, top={L * 1.1:.2f}")
+                            
                         if critical_time is not None:
                             ax2.set_xlim(left=0, right=max(critical_time, 0) * 1.1)
                     except Exception as e:
-                        self.update_detail_label(f"Параметры: R={R}, F={F}, Cc={Cc} | Ошибка настройки осей: {str(e)}")
+                        logging.error(f"Ошибка настройки осей: {str(e)}")
+                        self.update_detail_label(f"Параметры: L={L:.3f}, R={R}, F={F}, Cc={Cc} | Ошибка настройки осей: {str(e)}")
                     
                     self.update_progress(98, 100)
                     self.update_progress_label("Сохранение графика...")
@@ -1952,7 +2080,7 @@ class MultiInputWindow(tk.Tk):
                     # Копирование имени папки в буфер обмена для удобства
                     addToClipBoard(second_folder_name)
                     self.update_detail_label(
-                        f"Параметры: R={R}, F={F}, Cc={Cc} | "
+                        f"Параметры: L={L:.3f}, R={R}, F={F}, Cc={Cc} | "
                         f"Имя папки '{second_folder_name}' скопировано в буфер обмена"
                     )
 
@@ -1960,13 +2088,13 @@ class MultiInputWindow(tk.Tk):
                     try:
                         plt.savefig(output_file_path, bbox_inches='tight', format='png')
                         self.update_detail_label(
-                            f"Параметры: R={R}, F={F}, Cc={Cc} | "
+                            f"Параметры: L={L:.3f}, R={R}, F={F}, Cc={Cc} | "
                             f"График сохранен в файл: {output_file_path}"
                         )
                     except Exception as e:
                         error_msg = f"Ошибка сохранения графика: {str(e)}"
                         self.update_detail_label(
-                            f"Параметры: R={R}, F={F}, Cc={Cc} | ОШИБКА: {error_msg}"
+                            f"Параметры: L={L:.3f}, R={R}, F={F}, Cc={Cc} | ОШИБКА: {error_msg}"
                         )
                         messagebox.showerror("Ошибка", error_msg)
                     
@@ -2020,7 +2148,7 @@ def custom_message_box(callback_open_png, callback_open_folder, callback_close):
         top.destroy()
 
     top = Toplevel()
-    top.title("PCTT v0.9.0")
+    top.title("PCTT v0.10.1c")
     top.geometry("500x260")
     
     current_directory = os.path.dirname(__file__)
