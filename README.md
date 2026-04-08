@@ -181,7 +181,7 @@ $$\varphi(A, A_0) = \ln\left(\frac{A}{A_0}\right) \quad \text{и} \quad \varphi 
 
 Следовательно, единицы измерения  
 
-$$[q] = 1 \, \text{м}^{-1} \quad \text{и} \quad [q] = 1 \, \text{Нп/м}$$
+$$[q] = 1 \hspace{1mm} \text{м}^{-1} \quad \text{и} \quad [q] = 1 \hspace{1mm} \text{Нп/м}$$
 
 являются метрически тождественными $\left(1 \, \text{м}^{-1} \equiv 1 \, \text{Нп/м}\right)$ в силу безразмерности непера:  
 
