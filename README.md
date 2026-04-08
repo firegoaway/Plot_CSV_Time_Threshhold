@@ -159,15 +159,15 @@ $$K [\text{м}^{-1}] = A_{\text{Нп}} / L [\text{Нп/м}]$$
 $$\dim(Q) = \mathsf{L}^{-1}$$
 
 Существует отображение  
-$$\varphi: \mathbb{R}_{>0} \times \mathbb{R}_{>0} \to \mathbb{R},$$
+$$\varphi: \mathbb{R}_{>0} \times \mathbb{R}_{>0} \to \mathbb{R}$$
 
 такое что  
 $$\varphi(A, A_0) = \ln\left(\frac{A}{A_0}\right) \quad \text{и} \quad \varphi \in \text{Нп}$$
 
 Следовательно, единицы измерения  
-$$[Q] = 1\,\text{м}^{-1} \quad \text{и} \quad [Q] = 1\,\text{Нп/м}$$
+$$[Q] = 1 \hspace{1mm} \text{м}^{-1} \quad \text{и} \quad [Q] = 1 \hspace{1mm} \text{Нп/м}$$
 
-являются метрически тождественными $\left(1\,\text{м}^{-1} \equiv 1\,\text{Нп/м}\right)$ в силу безразмерности непера:  
+являются метрически тождественными $\left(1 \hspace{1mm} \text{м}^{-1} \equiv 1 \hspace{1mm} \text{Нп/м}\right)$ в силу безразмерности непера:  
 $$\text{Нп} = [\ln(X/X_0)] = 1$$
 
 Таким образом:  
