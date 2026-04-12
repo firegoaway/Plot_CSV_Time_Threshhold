@@ -24,7 +24,7 @@ class InsertDEVCApp(QMainWindow):
         self.setWindowIcon(QIcon(icon_path))
         
         # Установка свойств приложения
-        self.setWindowTitle("Insert_DEVC v0.10.1c")
+        self.setWindowTitle("Insert_DEVC v0.10.2")
         self.setMinimumSize(600, 660)
         
         self.unique_id = unique_id
@@ -523,7 +523,8 @@ class InsertDEVCApp(QMainWindow):
             trip_direction = 1
         
         # Сохранение порога срабатывания в INI файл
-        self.write_to_ini("IniSetpoint.ini", "IniSetpoint", "setpoint", str(setpoint))
+        ini_setpoint_file = f"IniSetpoint_{self.unique_id}.ini" if self.unique_id else "IniSetpoint.ini"
+        self.write_to_ini(ini_setpoint_file, "IniSetpoint", "setpoint", str(setpoint))
         
         # Чтение файла FDS
         try:
@@ -586,7 +587,8 @@ class InsertDEVCApp(QMainWindow):
             new_contents.append(line)
             
         # Сохранение deltaZ в INI файл
-        self.write_to_ini("InideltaZ.ini", "InideltaZ", "deltaZ", str(delta_z))
+        ini_deltaz_file = f"InideltaZ_{self.unique_id}.ini" if self.unique_id else "InideltaZ.ini"
+        self.write_to_ini(ini_deltaz_file, "InideltaZ", "deltaZ", str(delta_z))
         
         # Запись в выходной файл
         try:

@@ -111,7 +111,7 @@ class MultiInputWindow(tk.Tk):
         parent_directory = os.path.abspath(os.path.join(current_directory, os.pardir))
         icon_path = os.path.join(parent_directory, '.gitpics', 'pctt.ico')
 
-        self.title("PCTT v0.10.1c")
+        self.title("PCTT v0.10.2")
         self.iconbitmap(icon_path)
         self.wm_iconbitmap(icon_path)
         self.geometry("600x780")
@@ -286,7 +286,7 @@ class MultiInputWindow(tk.Tk):
         self.info_label.pack(side=tk.LEFT)
         
         # Добавляем версию в правый угол статусной строки
-        version_label = ttk.Label(status_frame, text="v0.10.1c", 
+        version_label = ttk.Label(status_frame, text="v0.10.2", 
                                  font=("Segoe UI", 9, "italic"), 
                                  foreground=self.colors["text_dark"])
         version_label.pack(side=tk.RIGHT)
@@ -2148,7 +2148,7 @@ def custom_message_box(callback_open_png, callback_open_folder, callback_close):
         top.destroy()
 
     top = Toplevel()
-    top.title("PCTT v0.10.1c")
+    top.title("PCTT v0.10.2")
     top.geometry("500x260")
     
     current_directory = os.path.dirname(__file__)
@@ -2264,11 +2264,11 @@ else:
     print("No Process ID received.")
 
 # Define paths for ini files
-iniHZ_path = os.path.join(inis_path, 'IniHZ.ini')
-InideltaZ_path = os.path.join(inis_path, 'InideltaZ.ini')
-IniSetpoint_path = os.path.join(inis_path, 'IniSetpoint.ini')
-IniQuantity_path = os.path.join(inis_path, 'IniQuantity.ini')
-IniFpom_path = os.path.join(inis_path, 'IniFpom.ini')
+iniHZ_path = os.path.join(inis_path, f'IniHZ_{ProcessID}.ini')
+InideltaZ_path = os.path.join(inis_path, f'InideltaZ_{ProcessID}.ini')
+IniSetpoint_path = os.path.join(inis_path, f'IniSetpoint_{ProcessID}.ini')
+IniQuantity_path = os.path.join(inis_path, f'IniQuantity_{ProcessID}.ini')
+IniFpom_path = os.path.join(inis_path, f'IniFpom_{ProcessID}.ini')
 
 value_IniHZ = None
 value_InideltaZ = None
