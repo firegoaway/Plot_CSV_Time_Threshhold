@@ -24,7 +24,7 @@ class InsertDEVCApp(QMainWindow):
         self.setWindowIcon(QIcon(icon_path))
         
         # Установка свойств приложения
-        self.setWindowTitle("Insert_DEVC v0.10.2")
+        self.setWindowTitle("Insert_DEVC v0.10.3")
         self.setMinimumSize(600, 660)
         
         self.unique_id = unique_id
@@ -447,31 +447,21 @@ class InsertDEVCApp(QMainWindow):
         ini_zh_file = f"IniZh_{self.unique_id}.ini" if self.unique_id else "IniZh.ini"
         self.write_to_ini(ini_zh_file, "IniZh", "Zh", self.zh_input.text())
 
-        # Обработка площади помещения, если флажок отмечен
+        # Обработка площади помещения, если флажок отмечен (режим 1 извещателя)
         if self.only_one_check.isChecked():
-            fpom = self.area_input.text()
+            fpom = self.area_input.text().strip()
             ini_fpom_file = f"IniFpom_{self.unique_id}.ini" if self.unique_id else "IniFpom.ini"
-            self.write_to_ini(ini_fpom_file, "IniFpom", "Fpom", fpom)
+            if fpom and fpom != "0":
+                self.write_to_ini(ini_fpom_file, "IniFpom", "Fpom", fpom)
+            else:
+                # Записываем 0, если поле пустое или равно 0
+                self.write_to_ini(ini_fpom_file, "IniFpom", "Fpom", "0")
 
-        # Обработка площади помещения, если флажок НЕ отмечен
+        # Обработка площади помещения, если флажок НЕ отмечен (стандартный режим)
         if not self.only_one_check.isChecked():
-            # Получение пути к FDS файлу для вычисления fpom
-            file_path = None
-            if self.unique_id:
-                ini_path = os.path.join(self.base_dir, "inis", f"filePath_{self.unique_id}.ini")
-                file_path = self.read_from_ini(ini_path, "filePath", "filePath")
-
-            if not file_path or not os.path.exists(file_path):
-                # Если путь к файлу не найден, запрашиваем у пользователя
-                file_path, _ = QFileDialog.getOpenFileName(
-                    self, "Выберите файл FDS для вычисления fpom", "", "FDS файлы (*.fds);;Все файлы (*)"
-                )
-
-            if file_path and os.path.exists(file_path):
-                fpom = self.calculate_fpom(file_path)
-                if fpom is not None:
-                    ini_fpom_file = f"IniFpom_{self.unique_id}.ini" if self.unique_id else "IniFpom.ini"
-                    self.write_to_ini(ini_fpom_file, "IniFpom", "Fpom", str(fpom))
+            ini_fpom_file = f"IniFpom_{self.unique_id}.ini" if self.unique_id else "IniFpom.ini"
+            # Записываем 0 — PCTT рассчитает F автоматически по формуле
+            self.write_to_ini(ini_fpom_file, "IniFpom", "Fpom", "0")
 
         # Обработка файла FDS
         self.process_fds_file(quantity, hz, zh)

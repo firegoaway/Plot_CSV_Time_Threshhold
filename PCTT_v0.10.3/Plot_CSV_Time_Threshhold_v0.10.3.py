@@ -111,7 +111,7 @@ class MultiInputWindow(tk.Tk):
         parent_directory = os.path.abspath(os.path.join(current_directory, os.pardir))
         icon_path = os.path.join(parent_directory, '.gitpics', 'pctt.ico')
 
-        self.title("PCTT v0.10.2")
+        self.title("PCTT v0.10.3")
         self.iconbitmap(icon_path)
         self.wm_iconbitmap(icon_path)
         self.geometry("600x780")
@@ -286,7 +286,7 @@ class MultiInputWindow(tk.Tk):
         self.info_label.pack(side=tk.LEFT)
         
         # Добавляем версию в правый угол статусной строки
-        version_label = ttk.Label(status_frame, text="v0.10.2", 
+        version_label = ttk.Label(status_frame, text="v0.10.3", 
                                  font=("Segoe UI", 9, "italic"), 
                                  foreground=self.colors["text_dark"])
         version_label.pack(side=tk.RIGHT)
@@ -1531,10 +1531,11 @@ class MultiInputWindow(tk.Tk):
                 Fpom_value = self.Fpom_entry.get().strip()
                 if Fpom_value:
                     self.Fpom = float(Fpom_value)
-                    if self.Fpom <= 0:
-                        raise ValueError("Площадь помещения должна быть положительным числом")
+                    if self.Fpom < 0:
+                        raise ValueError("Площадь помещения не может быть отрицательным числом")
+                    # Разрешаем Fpom = 0 — в этом случае PCTT рассчитает F автоматически
                 else:
-                    self.Fpom = None
+                    self.Fpom = None  # Будет рассчитано автоматически
                     
             except ValueError as e:
                 messagebox.showerror("Ошибка в данных", f"Пожалуйста, проверьте корректность введенных значений: {str(e)}")
@@ -1602,15 +1603,13 @@ class MultiInputWindow(tk.Tk):
             self.update_progress(10, 100)
 
             # Инициализируем L
-            L = None
+            L = None  # L для отображения на графике (порог d_eff)
 
             if input_Fpom and input_Fpom != 0:
                 input_Fpom = float(input_Fpom)
                 F = input_Fpom
                 detail_info = f'F (используем значение Fпом = {input_Fpom} из GUI) = {F}'
                 self.update_detail_label(detail_info)
-                # Рассчитываем L для случая, когда F задано
-                L = math.sqrt(F / math.pi) * 2
             else:
                 L = R * math.sqrt(2)
                 detail_info = f'L = {L:.2f} м'
@@ -1618,6 +1617,9 @@ class MultiInputWindow(tk.Tk):
                 F = math.ceil((math.pi * (L**2) / 4))
                 detail_info += f' | F (по умолчанию) = {F} м²'
                 self.update_detail_label(detail_info)
+
+            # L_display для отображения в статусе (теоретический радиус обнаружения)
+            L_display = L if L is not None else R * math.sqrt(2)
 
             Cc = math.ceil(F / input_Cs)
             detail_info += f' | Cc = {Cc}'
@@ -1674,8 +1676,7 @@ class MultiInputWindow(tk.Tk):
                     logging.debug(f"parameter_pattern = '{parameter_pattern}'")
 
                     # Обновляем интерфейс с подробной информацией о ходе обработки
-                    L = math.sqrt((4 * F) / math.pi)
-                    detail_info = f"Параметры: L={L:.3f}, R={R}, F={F}, Cc={Cc} | Найдено {len(valid_columns)} релевантных колонок из {len(headers)}"
+                    detail_info = f"Параметры: L={L_display:.3f}, R={R}, F={F}, Cc={Cc} | Найдено {len(valid_columns)} релевантных колонок из {len(headers)}"
                     self.update_detail_label(detail_info)
                     self.update_progress(25, 100)
 
@@ -1752,9 +1753,8 @@ class MultiInputWindow(tk.Tk):
                                 progress_pct = min(99, (i / total_rows) * 100)
 
                                 # Update UI with comprehensive information
-                                L = math.sqrt((4 * F) / math.pi)
                                 processing_info = (
-                                    f"Параметры: L={L:.3f}, R={R}, F={F}, Cc={Cc} | "
+                                    f"Параметры: L={L_display:.3f}, R={R}, F={F}, Cc={Cc} | "
                                     f"Обработано {i:,}/{total_rows:,} строк ({progress_pct:.1f}%) | "
                                     f"Скорость: {rows_per_second:.1f} строк/сек | "
                                     f"Осталось: ~{remaining_time/60:.1f} мин"
@@ -1784,13 +1784,13 @@ class MultiInputWindow(tk.Tk):
                     deff_values = []
                     
                     self.update_progress(0, len(filtered_data))
-                    self.update_detail_label(f"Параметры: L={L:.3f}, R={R}, F={F}, Cc={Cc} | Вычисление dэфф и поиск критического времени...")
+                    self.update_detail_label(f"Параметры: L={L_display:.3f}, R={R}, F={F}, Cc={Cc} | Вычисление dэфф и поиск критического времени...")
                     
                     # Проход по отфильтрованным данным для поиска критического времени
                     total_filtered_rows = len(filtered_data)
                     update_frequency = max(100, total_filtered_rows // 50)  # Update UI ~50 times total
 
-                    self.update_detail_label(f"Параметры: L={L:.3f}, R={R}, F={F}, Cc={Cc} | Анализ {total_filtered_rows} строк данных...")
+                    self.update_detail_label(f"Параметры: L={L_display:.3f}, R={R}, F={F}, Cc={Cc} | Анализ {total_filtered_rows} строк данных...")
 
                     # Initialize max_deff to track maximum value
                     max_deff = 0
@@ -1802,21 +1802,21 @@ class MultiInputWindow(tk.Tk):
                         vis_values = [val for j, val in enumerate(sample_row) if j != time_index and isinstance(val, float)]
                         logging.debug(f"Пример строки: {len(sample_row)} колонок, time_index={time_index}")
                         logging.debug(f"VISIBILITY значения в первой строке: {vis_values[:10]}")
-                        logging.debug(f"input_threshold = {input_threshold}, Cc = {Cc}, L = {L:.2f}")
+                        logging.debug(f"input_threshold = {input_threshold}, Cc = {Cc}, L = {L_display:.2f}")
                         # Подсчитаем count для первой строки
                         sample_count = sum(1 for j, val in enumerate(sample_row) if j != time_index and isinstance(val, float) and val <= input_threshold)
                         logging.debug(f"count для первой строки (VISIBILITY <= {input_threshold}): {sample_count}")
 
-                    # Проход по всем строкам для сбора deff_values и поиска критического времени
+                    # Проход по всем строкам для поиска критического времени
                     # Критическое время — первая строка, где count >= Cc
-                    # deff_values должен быть заполнен для ВСЕХ строк для корректного графика
-                    
+                    # deff_values заполняется только ДО нахождения критического времени
+
                     for i, row in enumerate(filtered_data):
                         # Minimize UI updates for better performance
                         if i % update_frequency == 0:
                             progress_pct = i * 100.0 / total_filtered_rows
                             self.update_progress(i, total_filtered_rows)
-                            self.update_detail_label(f"Параметры: L={L:.3f}, R={R}, F={F}, Cc={Cc} | Поиск критического времени: {progress_pct:.1f}%")
+                            self.update_detail_label(f"Параметры: L={L_display:.3f}, R={R}, F={F}, Cc={Cc} | Поиск критического времени: {progress_pct:.1f}%")
 
                         # Optimize count calculation - this is a performance-critical inner loop
                         # Подсчет точек, достигших порогового значения (ИСКЛЮЧАЯ Time колонку)
@@ -1829,24 +1829,24 @@ class MultiInputWindow(tk.Tk):
                         if i < 10:
                             logging.debug(f"Строка {i}: count={count}, Cc={Cc}, time={row[time_index] if len(row) > time_index else 'N/A'}")
 
-                        # Вычисление dэфф для ВСЕХ строк (для графика)
-                        deff = math.sqrt((4 * (count * input_Cs)) / math.pi)
-                        deff_values.append(deff)
-
-                        # Track maximum deff value
-                        if deff > max_deff:
-                            max_deff = deff
-
-                        # Поиск критического времени (первая строка, где count >= Cc)
-                        if critical_time is None and count >= Cc:
+                        # Проверка достижения критического значения
+                        if count >= Cc:
                             critical_time = row[time_index]
                             logging.debug(f"Критическое время найдено на строке {i}: critical_time={critical_time}, count={count}")
-                            self.update_detail_label(f"Параметры: L={L:.3f}, R={R}, F={F}, Cc={Cc} | Критическое время найдено: {critical_time} сек")
-                            # НЕ прерываем цикл — продолжаем собирать deff_values для графика
+                            self.update_detail_label(f"Параметры: L={L_display:.3f}, R={R}, F={F}, Cc={Cc} | Критическое время найдено: {critical_time} сек")
+                            break
+                        else:
+                            # Вычисление dэфф — только считаем, но обновляем GUI редко
+                            deff = math.sqrt((4 * (count * input_Cs)) / math.pi)
+                            deff_values.append(deff)
 
-                        # Существенно реже обновляем информацию — только для значимых изменений
-                        if i % (update_frequency * 5) == 0 and i > 0:
-                            self.update_detail_label(f"Параметры: L={L:.3f}, R={R}, F={F}, Cc={Cc} | dэфф: {deff:.2f} м, макс: {max_deff:.2f} м, порог: {L:.2f} м")
+                            # Track maximum deff value
+                            if deff > max_deff:
+                                max_deff = deff
+
+                            # Существенно реже обновляем информацию — только для значимых изменений
+                            if i % (update_frequency * 5) == 0 and i > 0:
+                                self.update_detail_label(f"Параметры: L={L_display:.3f}, R={R}, F={F}, Cc={Cc} | dэфф: {deff:.2f} м, макс: {max_deff:.2f} м, порог: {L_display:.2f} м")
 
                     # Отладочная информация после завершения поиска
                     logging.debug(f"deff_values: {len(deff_values)} элементов, max_deff={max_deff:.4f}")
@@ -1867,13 +1867,13 @@ class MultiInputWindow(tk.Tk):
                             max_vis = max(all_vis_values)
                             below_threshold = sum(1 for v in all_vis_values if v <= input_threshold)
                             self.update_detail_label(
-                                f"Параметры: L={L:.3f}, R={R}, F={F}, Cc={Cc} | "
+                                f"Параметры: L={L_display:.3f}, R={R}, F={F}, Cc={Cc} | "
                                 f"Отладка: VISIBILITY min={min_vis:.2f}, max={max_vis:.2f}, "
                                 f"ниже порога ({input_threshold}): {below_threshold} значений, "
                                 f"требуется Cc={Cc} одновременных достижений"
                             )
                         else:
-                            self.update_detail_label(f"Параметры: L={L:.3f}, R={R}, F={F}, Cc={Cc} | Отладка: Не найдено float значений VISIBILITY")
+                            self.update_detail_label(f"Параметры: L={L_display:.3f}, R={R}, F={F}, Cc={Cc} | Отладка: Не найдено float значений VISIBILITY")
                     
                     self.update_progress_label("Подготовка данных для графика...")
                     self.update_progress(60, 100)
@@ -1890,7 +1890,7 @@ class MultiInputWindow(tk.Tk):
                     # Собираем данные по остальным колонкам (параметры)
                     devc_data = {}
 
-                    self.update_detail_label(f"Параметры: L={L:.3f}, R={R}, F={F}, Cc={Cc} | Собираем данные по {len(valid_columns)} колонкам...")
+                    self.update_detail_label(f"Параметры: L={L_display:.3f}, R={R}, F={F}, Cc={Cc} | Собираем данные по {len(valid_columns)} колонкам...")
 
                     # Проходим по всем колонкам в valid_columns, кроме Time
                     for j, col_position in enumerate(valid_columns):
@@ -1927,7 +1927,7 @@ class MultiInputWindow(tk.Tk):
                     total_cells = len(devc_data)
                     filled_cells = 0
 
-                    self.update_detail_label(f"Параметры: L={L:.3f}, R={R}, F={F}, Cc={Cc} | Начинаем построение графика для {total_cells} наборов данных")
+                    self.update_detail_label(f"Параметры: L={L_display:.3f}, R={R}, F={F}, Cc={Cc} | Начинаем построение графика для {total_cells} наборов данных")
                     
                     # Для первой оси Y рисуем значения devc_data (каждой точки)
                     # Optimize for large datasets by reducing UI updates and plotting in batches
@@ -1936,7 +1936,7 @@ class MultiInputWindow(tk.Tk):
                     # Pre-allocate memory for plot data
                     if total_cells > 1000:
                         # For very large datasets, use downsampling to improve performance
-                        self.update_detail_label(f"Параметры: L={L:.3f}, R={R}, F={F}, Cc={Cc} | Оптимизация построения графика ({total_cells} наборов)")
+                        self.update_detail_label(f"Параметры: L={L_display:.3f}, R={R}, F={F}, Cc={Cc} | Оптимизация построения графика ({total_cells} наборов)")
                         
                         # Plot time values in batches for better performance
                         batch_counter = 0
@@ -1960,7 +1960,7 @@ class MultiInputWindow(tk.Tk):
                                 progress = 80 + (5 * filled_cells / total_cells)
                                 self.update_progress(progress, 100)
                                 self.update_detail_label(
-                                    f"Параметры: L={L:.3f}, R={R}, F={F}, Cc={Cc} | "
+                                    f"Параметры: L={L_display:.3f}, R={R}, F={F}, Cc={Cc} | "
                                     f"Построение графика: {(filled_cells/total_cells*100):.1f}% ({filled_cells}/{total_cells})"
                                 )
                     else:
@@ -1977,13 +1977,13 @@ class MultiInputWindow(tk.Tk):
                                 progress = 80 + (5 * filled_cells / total_cells)
                                 self.update_progress(progress, 100)
                                 self.update_detail_label(
-                                    f"Параметры: L={L:.3f}, R={R}, F={F}, Cc={Cc} | "
+                                    f"Параметры: L={L_display:.3f}, R={R}, F={F}, Cc={Cc} | "
                                     f"Построение графика: {(filled_cells/total_cells*100):.1f}% ({filled_cells}/{total_cells})"
                                 )
                     
                     self.update_progress(85, 100)
                     self.update_progress_label("Добавление кривой dэфф...")
-                    self.update_detail_label(f"Параметры: L={L:.3f}, R={R}, F={F}, Cc={Cc} | Добавление кривой dэфф на график...")
+                    self.update_detail_label(f"Параметры: L={L_display:.3f}, R={R}, F={F}, Cc={Cc} | Добавление кривой dэфф на график...")
                     
                     # Рисуем значения d_eff на полотне ax2 с собственной осью Y
                     ax2.plot(relevant_time_values, deff_values, color='black', linewidth=5, label='dэфф (м)')
@@ -1992,11 +1992,11 @@ class MultiInputWindow(tk.Tk):
                     self.update_progress_label("Добавление пороговых линий...")
                     
                     if critical_time is not None:
-                        self.update_detail_label(f"Параметры: L={L:.3f}, R={R}, F={F}, Cc={Cc} | Построение критической линии tпор = {critical_time:.2f} сек")
+                        self.update_detail_label(f"Параметры: L={L_display:.3f}, R={R}, F={F}, Cc={Cc} | Построение критической линии tпор = {critical_time:.2f} сек")
                         ax1.axvline(x=critical_time, color='red', linestyle='--', lw=3, label=f'tпор = {critical_time:.2f} (сек)')
                     else:
                         error_msg = "Критическое время не найдено. Проверьте предельное значение параметра."
-                        self.update_detail_label(f"Параметры: L={L:.3f}, R={R}, F={F}, Cc={Cc} | ОШИБКА: {error_msg}")
+                        self.update_detail_label(f"Параметры: L={L_display:.3f}, R={R}, F={F}, Cc={Cc} | ОШИБКА: {error_msg}")
                         messagebox.showinfo("Проверка данных", "Проверьте введённые данные. Возможно вы неправильно указали предельное значение параметра, воздействующего на пожарный извещатель.")
                     
                     self.update_progress(90, 100)
@@ -2020,14 +2020,18 @@ class MultiInputWindow(tk.Tk):
                     if critical_time is not None:
                         f1 = critical_time + 60 + 20
                         f2f4 = critical_time + 30 + 20
-                        self.update_detail_label(f"Параметры: L={L:.3f}, R={R}, F={F}, Cc={Cc} | Расчетные значения: F1={f1:.2f} сек, F2-F5={f2f4:.2f} сек")
+                        self.update_detail_label(f"Параметры: L={L_display:.3f}, R={R}, F={F}, Cc={Cc} | Расчетные значения: F1={f1:.2f} сек, F2-F5={f2f4:.2f} сек")
                     
                     self.update_progress(92, 100)
                     self.update_progress_label("Оформление графика...")
 
-                    # Добавляем горизонтальную линию для L и input_threshold на соответствующих осях
+                    # Добавляем горизонтальную линию для input_threshold и порогового d_eff
                     ax1.axhline(y=input_threshold, color='blue', linestyle='--', lw=3, label=f'Крит. знач. параметра = {input_threshold:.3f} ({measure_units})', alpha=0.5)
-                    ax2.axhline(y=L, color='green', linestyle='--', lw=3, label=f'dэфф = {L:.3f} (м)', alpha=0.5)
+
+                    # Зелёная линия — пороговое значение d_eff (максимальное до критического времени)
+                    if deff_values:
+                        L_threshold = max(deff_values)
+                        ax2.axhline(y=L_threshold, color='green', linestyle='--', lw=3, label=f'dэфф = {L_threshold:.3f} (м)', alpha=0.5)
                     
                     self.update_progress(94, 100)
                     
@@ -2045,7 +2049,7 @@ class MultiInputWindow(tk.Tk):
                     ax1.legend(lines1 + lines2, labels1 + labels2, loc='center left')
                     
                     self.update_progress(96, 100)
-                    self.update_detail_label(f"Параметры: L={L:.3f}, R={R}, F={F}, Cc={Cc} | Настройка осей графика...")
+                    self.update_detail_label(f"Параметры: L={L_display:.3f}, R={R}, F={F}, Cc={Cc} | Настройка осей графика...")
 
                     # Настройка осей
                     try:
@@ -2054,19 +2058,16 @@ class MultiInputWindow(tk.Tk):
                         if critical_time is not None:
                             ax1.set_xlim(left=0, right=max(critical_time, 0) * 1.1)
 
-                        # Правая ось (ax2) - масштабируется по L (пороговое значение dэфф)
-                        # L — это dэфф в момент достижения критического условия (count = Cc)
-                        # Это обеспечивает правильное наложение зелёной линии на график
-                        if L is not None:
-                            # Для всех параметров масштабируем по L
-                            ax2.set_ylim(bottom=0, top=L * 1.1)
-                            logging.debug(f"ax2 ylim установлено по L: bottom=0, top={L * 1.1:.2f}")
-                            
+                        # Правая ось (ax2) - масштабируется по max(deff_values)
+                        if deff_values:
+                            ax2.set_ylim(bottom=0, top=max(deff_values) * 1.1)
+                            logging.debug(f"ax2 ylim установлено по max(deff_values): bottom=0, top={max(deff_values) * 1.1:.2f}")
+
                         if critical_time is not None:
                             ax2.set_xlim(left=0, right=max(critical_time, 0) * 1.1)
                     except Exception as e:
                         logging.error(f"Ошибка настройки осей: {str(e)}")
-                        self.update_detail_label(f"Параметры: L={L:.3f}, R={R}, F={F}, Cc={Cc} | Ошибка настройки осей: {str(e)}")
+                        self.update_detail_label(f"Параметры: L={L_display:.3f}, R={R}, F={F}, Cc={Cc} | Ошибка настройки осей: {str(e)}")
                     
                     self.update_progress(98, 100)
                     self.update_progress_label("Сохранение графика...")
@@ -2080,7 +2081,7 @@ class MultiInputWindow(tk.Tk):
                     # Копирование имени папки в буфер обмена для удобства
                     addToClipBoard(second_folder_name)
                     self.update_detail_label(
-                        f"Параметры: L={L:.3f}, R={R}, F={F}, Cc={Cc} | "
+                        f"Параметры: L={L_display:.3f}, R={R}, F={F}, Cc={Cc} | "
                         f"Имя папки '{second_folder_name}' скопировано в буфер обмена"
                     )
 
@@ -2088,13 +2089,13 @@ class MultiInputWindow(tk.Tk):
                     try:
                         plt.savefig(output_file_path, bbox_inches='tight', format='png')
                         self.update_detail_label(
-                            f"Параметры: L={L:.3f}, R={R}, F={F}, Cc={Cc} | "
+                            f"Параметры: L={L_display:.3f}, R={R}, F={F}, Cc={Cc} | "
                             f"График сохранен в файл: {output_file_path}"
                         )
                     except Exception as e:
                         error_msg = f"Ошибка сохранения графика: {str(e)}"
                         self.update_detail_label(
-                            f"Параметры: L={L:.3f}, R={R}, F={F}, Cc={Cc} | ОШИБКА: {error_msg}"
+                            f"Параметры: L={L_display:.3f}, R={R}, F={F}, Cc={Cc} | ОШИБКА: {error_msg}"
                         )
                         messagebox.showerror("Ошибка", error_msg)
                     
@@ -2148,7 +2149,7 @@ def custom_message_box(callback_open_png, callback_open_folder, callback_close):
         top.destroy()
 
     top = Toplevel()
-    top.title("PCTT v0.10.2")
+    top.title("PCTT v0.10.3")
     top.geometry("500x260")
     
     current_directory = os.path.dirname(__file__)
